@@ -171,4 +171,18 @@ public class WatchDataClient {
         cmd.action = WearProtocol.CMD_STOP_ALL_ALERTS;
         sendCommandAsync(context, cmd);
     }
+
+    public static void answerCall(Context context, String conversationKey) {
+        WearProtocol.WatchCommand cmd = new WearProtocol.WatchCommand();
+        cmd.action = WearProtocol.CMD_ANSWER_CALL;
+        cmd.conversationKey = conversationKey;
+        sendCommandAsync(context, cmd);
+    }
+
+    public static void declineCall(Context context, String conversationKey) {
+        WearProtocol.WatchCommand cmd = new WearProtocol.WatchCommand();
+        cmd.action = WearProtocol.CMD_DECLINE_CALL;
+        cmd.conversationKey = conversationKey;
+        sendCommandAsync(context, cmd);
+    }
 }

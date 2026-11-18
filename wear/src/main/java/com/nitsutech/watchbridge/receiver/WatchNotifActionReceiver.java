@@ -8,7 +8,9 @@ import android.os.Bundle;
 
 import androidx.core.app.RemoteInput;
 
+import com.nitsutech.watchbridge.wear.WatchAudioHelper;
 import com.nitsutech.watchbridge.wear.WatchDataClient;
+import com.nitsutech.watchbridge.wear.WatchHapticHelper;
 import com.nitsutech.watchbridge.wear.WatchNotifHelper;
 import com.nitsutech.watchbridge.wear.WearProtocol;
 
@@ -19,6 +21,8 @@ public class WatchNotifActionReceiver extends BroadcastReceiver {
     public static final String ACTION_WATCH_SNOOZE_3M = "com.nitsutech.watchbridge.WATCH_ACTION_SNOOZE_3M";
     public static final String ACTION_WATCH_MARK_READ = "com.nitsutech.watchbridge.WATCH_ACTION_MARK_READ";
     public static final String ACTION_DISMISS_WATCH_NOTIF = "com.nitsutech.watchbridge.WATCH_ACTION_DISMISS";
+    public static final String ACTION_WATCH_ANSWER_CALL = "com.nitsutech.watchbridge.WATCH_ACTION_ANSWER_CALL";
+    public static final String ACTION_WATCH_DECLINE_CALL = "com.nitsutech.watchbridge.WATCH_ACTION_DECLINE_CALL";
 
     public static final String EXTRA_CONV_KEY = "conv_key";
     public static final String EXTRA_NOTIF_ID = "notif_id";
@@ -63,6 +67,22 @@ public class WatchNotifActionReceiver extends BroadcastReceiver {
                 cmd.action = WearProtocol.CMD_STOP_CHAT_ALERT;
                 cmd.conversationKey = convKey;
                 WatchDataClient.sendCommandAsync(context, cmd);
+            }
+        } else if (ACTION_WATCH_ANSWER_CALL.equals(action)) {
+            WatchHapticHelper.stopCallRingLoop();
+            WatchAudioHelper.stopCallRingtone();
+            WatchNotifHelper.cancelCallNotification(context);
+            if (convKey != null) {
+                WatchDataClient.answerCall(context, convKey);
+                cancelLocalNotif(context, convKey, notifId);
+            }
+        } else if (ACTION_WATCH_DECLINE_CALL.equals(action)) {
+            WatchHapticHelper.stopCallRingLoop();
+            WatchAudioHelper.stopCallRingtone();
+            WatchNotifHelper.cancelCallNotification(context);
+            if (convKey != null) {
+                WatchDataClient.declineCall(context, convKey);
+                cancelLocalNotif(context, convKey, notifId);
             }
         }
     }

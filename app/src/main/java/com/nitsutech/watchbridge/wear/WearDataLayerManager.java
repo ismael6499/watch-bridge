@@ -105,6 +105,23 @@ public class WearDataLayerManager {
         IO_EXEC.execute(() -> sendAlertTickBlocking(appCtx, tick));
     }
 
+    public static void sendCallEndedAsync(Context context, String conversationKey) {
+        final Context appCtx = context.getApplicationContext();
+        IO_EXEC.execute(() -> {
+            try {
+                byte[] bytes = (conversationKey == null ? "" : conversationKey).getBytes(StandardCharsets.UTF_8);
+                List<Node> nodes = Tasks.await(Wearable.getNodeClient(appCtx).getConnectedNodes());
+                if (nodes != null && !nodes.isEmpty()) {
+                    for (Node node : nodes) {
+                        Tasks.await(Wearable.getMessageClient(appCtx)
+                                .sendMessage(node.getId(), WearProtocol.PATH_CALL_END_MSG, bytes));
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        });
+    }
+
     public static void sendVoiceNoteToWatchAsync(Context context, long messageId, String conversationKey) {
         final Context appCtx = context.getApplicationContext();
         IO_EXEC.execute(() -> {

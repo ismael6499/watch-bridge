@@ -1,6 +1,7 @@
 package com.nitsutech.watchbridge.engine;
 
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.graphics.Bitmap;
 
 import java.util.ArrayList;
@@ -19,6 +20,8 @@ public class ActionCache {
     public static class CachedActions {
         public Notification.Action replyAction;
         public Notification.Action markReadAction;
+        public PendingIntent answerCallIntent;
+        public PendingIntent declineCallIntent;
         public Bitmap avatarBitmap;
         public String originalNotificationKey;
         public String packageName;
@@ -34,6 +37,7 @@ public class ActionCache {
 
     private static final ConcurrentHashMap<String, CachedActions> CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> SBN_TO_CONV = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Boolean> ACTIVE_CALL_SBN_HAD_ANSWER = new ConcurrentHashMap<>();
     private static final Map<String, String> DEDUP_HASH = Collections.synchronizedMap(
             new LinkedHashMap<String, String>(64, 0.75f, true) {
                 @Override
@@ -54,6 +58,12 @@ public class ActionCache {
         }
         if (msg.markReadAction != null) {
             entry.markReadAction = msg.markReadAction;
+        }
+        if (msg.answerCallIntent != null) {
+            entry.answerCallIntent = msg.answerCallIntent;
+        }
+        if (msg.declineCallIntent != null) {
+            entry.declineCallIntent = msg.declineCallIntent;
         }
         if (msg.senderAvatar != null) {
             entry.avatarBitmap = msg.senderAvatar;
@@ -80,6 +90,20 @@ public class ActionCache {
 
     public static String getConversationKeyForSbnKey(String sbnKey) {
         return sbnKey == null ? null : SBN_TO_CONV.remove(sbnKey);
+    }
+
+    public static void markCallActive(String sbnKey, boolean hadAnswerIntent) {
+        if (sbnKey != null) {
+            ACTIVE_CALL_SBN_HAD_ANSWER.put(sbnKey, hadAnswerIntent);
+        }
+    }
+
+    public static Boolean getActiveCallHadAnswer(String sbnKey) {
+        return sbnKey == null ? null : ACTIVE_CALL_SBN_HAD_ANSWER.get(sbnKey);
+    }
+
+    public static boolean clearActiveCallForSbnKey(String sbnKey) {
+        return sbnKey != null && ACTIVE_CALL_SBN_HAD_ANSWER.remove(sbnKey) != null;
     }
 
     public static boolean isDuplicateRecent(String conversationKey, String sender, String text, long timestamp) {

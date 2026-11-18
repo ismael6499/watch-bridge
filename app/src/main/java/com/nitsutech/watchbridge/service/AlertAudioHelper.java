@@ -6,6 +6,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioAttributes;
+import android.media.AudioDeviceInfo;
 import android.media.AudioManager;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
@@ -184,6 +185,60 @@ public class AlertAudioHelper {
         // Also attempt direct launch if screen is already unlocked/interactive
         try {
             context.startActivity(fullScreenIntent);
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void routeCallAudioToWatchBluetooth(Context context) {
+        final Context appCtx = context.getApplicationContext();
+        applyWatchBtRouteOnce(appCtx);
+        MAIN_HANDLER.postDelayed(() -> applyWatchBtRouteOnce(appCtx), 600L);
+        MAIN_HANDLER.postDelayed(() -> applyWatchBtRouteOnce(appCtx), 1500L);
+        MAIN_HANDLER.postDelayed(() -> applyWatchBtRouteOnce(appCtx), 2800L);
+    }
+
+    private static void applyWatchBtRouteOnce(Context context) {
+        try {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                AudioDeviceInfo watchSco = null;
+                AudioDeviceInfo anySco = null;
+                for (AudioDeviceInfo dev : am.getAvailableCommunicationDevices()) {
+                    if (dev.getType() == AudioDeviceInfo.TYPE_BLUETOOTH_SCO
+                            || dev.getType() == AudioDeviceInfo.TYPE_BLE_HEADSET) {
+                        if (anySco == null) anySco = dev;
+                        String name = dev.getProductName() != null
+                                ? dev.getProductName().toString().toLowerCase(java.util.Locale.ROOT)
+                                : "";
+                        if (name.contains("watch") || name.contains("galaxy")) {
+                            watchSco = dev;
+                            break;
+                        }
+                    }
+                }
+                AudioDeviceInfo target = watchSco != null ? watchSco : anySco;
+                if (target != null) {
+                    am.setCommunicationDevice(target);
+                }
+            } else {
+                am.startBluetoothSco();
+                am.setBluetoothScoOn(true);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void clearCallAudioRouting(Context context) {
+        try {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                am.clearCommunicationDevice();
+            } else {
+                am.setBluetoothScoOn(false);
+                am.stopBluetoothSco();
+            }
         } catch (Exception ignored) {
         }
     }

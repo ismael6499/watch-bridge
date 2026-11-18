@@ -51,4 +51,27 @@ public class WatchHapticHelper {
         } catch (Exception ignored) {
         }
     }
+
+    private static final android.os.Handler CALL_HANDLER = new android.os.Handler(android.os.Looper.getMainLooper());
+    private static volatile boolean callRingLoopActive = false;
+
+    public static void startCallRingLoop(Context context) {
+        stopCallRingLoop();
+        callRingLoopActive = true;
+        final Context appCtx = context.getApplicationContext();
+        Runnable tick = new Runnable() {
+            @Override
+            public void run() {
+                if (!callRingLoopActive) return;
+                playPattern(appCtx, 3, 3);
+                CALL_HANDLER.postDelayed(this, 1600L);
+            }
+        };
+        CALL_HANDLER.post(tick);
+    }
+
+    public static void stopCallRingLoop() {
+        callRingLoopActive = false;
+        CALL_HANDLER.removeCallbacksAndMessages(null);
+    }
 }

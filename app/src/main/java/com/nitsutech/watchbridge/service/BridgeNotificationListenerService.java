@@ -42,6 +42,29 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         ParsedMessage parsed = NotificationParser.parse(this, sbn, rankingMap, prefs);
         if (parsed == null) return;
 
+        if (parsed.isIncomingCall) {
+            Boolean prevHadAnswer = ActionCache.getActiveCallHadAnswer(parsed.notificationKey);
+            if (parsed.isChronometerCall) {
+                if (prevHadAnswer != null) {
+                    ActionCache.clearActiveCallForSbnKey(parsed.notificationKey);
+                    PersistentRepeatForegroundService.stopChatSession(this, parsed.conversationKey);
+                    WearDataLayerManager.sendCallEndedAsync(this, parsed.conversationKey);
+                }
+                return;
+            }
+            if (prevHadAnswer != null) {
+                if (prevHadAnswer && parsed.answerCallIntent == null) {
+                    ActionCache.clearActiveCallForSbnKey(parsed.notificationKey);
+                    PersistentRepeatForegroundService.stopChatSession(this, parsed.conversationKey);
+                    WearDataLayerManager.sendCallEndedAsync(this, parsed.conversationKey);
+                    return;
+                }
+                ActionCache.put(parsed);
+                return;
+            }
+            ActionCache.markCallActive(parsed.notificationKey, parsed.answerCallIntent != null);
+        }
+
         if (ActionCache.isDuplicateRecent(parsed.conversationKey, parsed.senderName, parsed.messageText, parsed.timestamp)) {
             ActionCache.put(parsed);
             return;
@@ -71,14 +94,19 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         }
 
         // 2. If original app notification was read/cleared on phone
+        boolean wasActiveCall = ActionCache.clearActiveCallForSbnKey(sbn.getKey());
         PrefsManager prefs = new PrefsManager(this);
-        if (!prefs.isSyncDismissOnPhoneClearEnabled()) {
+        if (!wasActiveCall && !prefs.isSyncDismissOnPhoneClearEnabled()) {
             return;
         }
         String origConvKey = ActionCache.getConversationKeyForSbnKey(sbn.getKey());
         if (!TextUtils.isEmpty(origConvKey)) {
             PersistentRepeatForegroundService.stopChatSession(this, origConvKey);
             ProxyNotificationHelper.cancelNotificationForChat(this, origConvKey);
+            if (wasActiveCall) {
+                AlertAudioHelper.clearCallAudioRouting(this);
+                WearDataLayerManager.sendCallEndedAsync(this, origConvKey);
+            }
             AppDatabase db = AppDatabase.getInstance(this);
             db.executor().execute(() -> {
                 db.chatMessageDao().markConversationRead(origConvKey);
@@ -239,6 +267,8 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         tick.isRepeating = decision.shouldRepeat;
         tick.isGroup = parsed.isGroup;
         tick.isCall = parsed.isIncomingCall;
+        tick.canAnswerCall = parsed.answerCallIntent != null;
+        tick.canDeclineCall = parsed.declineCallIntent != null;
         tick.autoTts = prefs.isRepeatMode() && prefs.isAutoTtsInRepeatEnabled();
         tick.hasVoiceNote = parsed.hasVoiceNote;
         tick.mediaBase64 = parsed.mediaBase64;

@@ -25,6 +25,8 @@ public class WatchAudioHelper {
     private static TextToSpeech tts;
     private static boolean ttsReady = false;
     private static float currentSpeed = 1.0f;
+    private static volatile Ringtone activeCallRingtone;
+    private static volatile boolean callRingtonePlaying = false;
     private static final Handler HANDLER = new Handler(Looper.getMainLooper());
 
     public static void playVoiceFile(Context context, File file, float speed, Runnable onComplete) {
@@ -167,6 +169,53 @@ public class WatchAudioHelper {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    public static void startCallRingtone(Context context) {
+        stopCallRingtone();
+        callRingtonePlaying = true;
+        final Context appCtx = context.getApplicationContext();
+        Runnable ringTask = new Runnable() {
+            @Override
+            public void run() {
+                if (!callRingtonePlaying) return;
+                try {
+                    if (activeCallRingtone == null) {
+                        Uri uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE);
+                        if (uri == null) {
+                            uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                        }
+                        if (uri != null) {
+                            activeCallRingtone = RingtoneManager.getRingtone(appCtx, uri);
+                            if (activeCallRingtone != null) {
+                                activeCallRingtone.setAudioAttributes(new AudioAttributes.Builder()
+                                        .setUsage(AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                                        .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                                        .build());
+                            }
+                        }
+                    }
+                    if (activeCallRingtone != null && !activeCallRingtone.isPlaying()) {
+                        activeCallRingtone.play();
+                    }
+                } catch (Exception ignored) {
+                }
+                HANDLER.postDelayed(this, 1800L);
+            }
+        };
+        HANDLER.post(ringTask);
+    }
+
+    public static void stopCallRingtone() {
+        callRingtonePlaying = false;
+        HANDLER.removeCallbacksAndMessages(null);
+        try {
+            if (activeCallRingtone != null && activeCallRingtone.isPlaying()) {
+                activeCallRingtone.stop();
+            }
+        } catch (Exception ignored) {
+        }
+        activeCallRingtone = null;
     }
 
     public static void playEscalationChime(Context context) {

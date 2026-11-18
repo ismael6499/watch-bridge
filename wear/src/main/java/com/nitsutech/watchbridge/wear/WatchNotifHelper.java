@@ -31,6 +31,8 @@ public class WatchNotifHelper {
     public static final String KEY_WATCH_TEXT_REPLY = "key_watch_text_reply";
     private static final String CHANNEL_WATCH_NORMAL = "watchbridge_watch_normal";
     private static final String CHANNEL_WATCH_REPEAT = "watchbridge_watch_repeat";
+    private static final String CHANNEL_WATCH_CALLS = "watchbridge_watch_calls";
+    private static final int CALL_NOTIF_ID = 7701;
     private static final AtomicInteger NEXT_ID = new AtomicInteger(6000);
     private static final ConcurrentHashMap<String, Integer> ACTIVE_IDS = new ConcurrentHashMap<>();
 
@@ -227,6 +229,72 @@ public class WatchNotifHelper {
         }
     }
 
+    public static void postIncomingCallNotification(Context context, WearProtocol.AlertTickPayload tick) {
+        if (tick == null) return;
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm == null) return;
+        ensureChannels(context, nm);
+
+        String caller = !TextUtils.isEmpty(tick.senderName) ? tick.senderName : tick.conversationTitle;
+        if (TextUtils.isEmpty(caller)) caller = tick.appLabel;
+
+        Intent callUi = new Intent(context, com.nitsutech.watchbridge.ui.WatchCallActivity.class);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CONV_KEY, tick.conversationKey);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CALLER_NAME, caller);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_APP_LABEL, tick.appLabel);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CAN_ANSWER, tick.canAnswerCall);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CAN_DECLINE, tick.canDeclineCall);
+        callUi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        PendingIntent fullPi = PendingIntent.getActivity(
+                context, CALL_NOTIF_ID, callUi,
+                PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+        );
+
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_WATCH_CALLS)
+                .setSmallIcon(R.drawable.ic_watch_logo)
+                .setContentTitle(caller)
+                .setSubText(tick.appLabel)
+                .setContentText(context.getString(R.string.wear_call_incoming))
+                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setOngoing(true)
+                .setAutoCancel(false)
+                .setOnlyAlertOnce(false)
+                .setFullScreenIntent(fullPi, true)
+                .setContentIntent(fullPi);
+
+        if (tick.canAnswerCall) {
+            Intent ansIntent = new Intent(context, WatchNotifActionReceiver.class);
+            ansIntent.setAction(WatchNotifActionReceiver.ACTION_WATCH_ANSWER_CALL);
+            ansIntent.putExtra(WatchNotifActionReceiver.EXTRA_CONV_KEY, tick.conversationKey);
+            ansIntent.putExtra(WatchNotifActionReceiver.EXTRA_NOTIF_ID, CALL_NOTIF_ID);
+            PendingIntent ansPi = PendingIntent.getBroadcast(
+                    context, CALL_NOTIF_ID + 10, ansIntent,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+            );
+            builder.addAction(R.drawable.ic_watch_logo, context.getString(R.string.wear_call_answer), ansPi);
+        }
+
+        if (tick.canDeclineCall) {
+            Intent decIntent = new Intent(context, WatchNotifActionReceiver.class);
+            decIntent.setAction(WatchNotifActionReceiver.ACTION_WATCH_DECLINE_CALL);
+            decIntent.putExtra(WatchNotifActionReceiver.EXTRA_CONV_KEY, tick.conversationKey);
+            decIntent.putExtra(WatchNotifActionReceiver.EXTRA_NOTIF_ID, CALL_NOTIF_ID);
+            PendingIntent decPi = PendingIntent.getBroadcast(
+                    context, CALL_NOTIF_ID + 20, decIntent,
+                    PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+            );
+            builder.addAction(R.drawable.ic_watch_logo, context.getString(R.string.wear_call_decline), decPi);
+        }
+
+        nm.notify(CALL_NOTIF_ID, builder.build());
+    }
+
+    public static void cancelCallNotification(Context context) {
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (nm != null) nm.cancel(CALL_NOTIF_ID);
+    }
+
     public static void cancelForChat(Context context, String conversationKey) {
         if (conversationKey == null) return;
         Integer id = ACTIVE_IDS.remove(conversationKey);
@@ -259,6 +327,15 @@ public class WatchNotifHelper {
             NotificationChannel ch = new NotificationChannel(
                     CHANNEL_WATCH_REPEAT,
                     context.getString(R.string.wear_channel_repeat),
+                    NotificationManager.IMPORTANCE_HIGH
+            );
+            ch.enableVibration(true);
+            nm.createNotificationChannel(ch);
+        }
+        if (nm.getNotificationChannel(CHANNEL_WATCH_CALLS) == null) {
+            NotificationChannel ch = new NotificationChannel(
+                    CHANNEL_WATCH_CALLS,
+                    context.getString(R.string.wear_channel_calls),
                     NotificationManager.IMPORTANCE_HIGH
             );
             ch.enableVibration(true);

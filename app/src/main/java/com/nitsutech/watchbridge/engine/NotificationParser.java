@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.RemoteInput;
 import android.content.ContentResolver;
 import android.content.Context;
@@ -81,6 +82,7 @@ public class NotificationParser {
         parsed.appLabel = resolveAppLabel(context, pkg);
         parsed.timestamp = sbn.getPostTime() > 0 ? sbn.getPostTime() : System.currentTimeMillis();
         parsed.isIncomingCall = isCallNotification(n);
+        parsed.isChronometerCall = parsed.isIncomingCall && extras.getBoolean(Notification.EXTRA_SHOW_CHRONOMETER, false);
         parsed.isSourceSilent = !parsed.isIncomingCall && isSourceNotificationSilent(sbn, n, rankingMap);
 
         // Extract MessagingStyle details when available
@@ -130,6 +132,18 @@ public class NotificationParser {
             }
         }
 
+        if (TextUtils.isEmpty(senderName) || senderName.equalsIgnoreCase(parsed.appLabel)) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                Object callPersonObj = extras.getParcelable("android.callPerson");
+                if (callPersonObj instanceof android.app.Person) {
+                    CharSequence cpName = ((android.app.Person) callPersonObj).getName();
+                    if (!TextUtils.isEmpty(cpName)) {
+                        senderName = cpName.toString();
+                        convTitle = senderName;
+                    }
+                }
+            }
+        }
         if (TextUtils.isEmpty(convTitle)) {
             convTitle = !TextUtils.isEmpty(title) ? title : parsed.appLabel;
         }
@@ -237,8 +251,12 @@ public class NotificationParser {
 
     private static boolean isCallNotification(Notification n) {
         if (Notification.CATEGORY_CALL.equals(n.category)) return true;
-        String template = n.extras != null ? n.extras.getString(Notification.EXTRA_TEMPLATE, "") : "";
-        return template != null && template.contains("CallStyle");
+        if (n.extras == null) return false;
+        String template = n.extras.getString(Notification.EXTRA_TEMPLATE, "");
+        if (template != null && template.contains("CallStyle")) return true;
+        return n.extras.getParcelable("android.answerIntent") != null
+                || n.extras.getParcelable("android.declineIntent") != null
+                || n.extras.getParcelable("android.hangUpIntent") != null;
     }
 
     private static boolean isSystemNoise(String pkg, String title, String text) {
@@ -514,6 +532,19 @@ public class NotificationParser {
     }
 
     private static void extractActions(Notification n, ParsedMessage parsed) {
+        if (parsed.isIncomingCall && n.extras != null) {
+            Parcelable ans = n.extras.getParcelable("android.answerIntent");
+            if (ans instanceof PendingIntent) {
+                parsed.answerCallIntent = (PendingIntent) ans;
+            }
+            Parcelable dec = n.extras.getParcelable("android.declineIntent");
+            if (!(dec instanceof PendingIntent)) {
+                dec = n.extras.getParcelable("android.hangUpIntent");
+            }
+            if (dec instanceof PendingIntent) {
+                parsed.declineCallIntent = (PendingIntent) dec;
+            }
+        }
         if (n.actions == null) return;
         for (Notification.Action action : n.actions) {
             if (action == null) continue;
@@ -523,6 +554,25 @@ public class NotificationParser {
                 continue;
             }
             String actionTitle = action.title != null ? action.title.toString().toLowerCase(Locale.ROOT) : "";
+            if (parsed.isIncomingCall) {
+                if (parsed.answerCallIntent == null && action.actionIntent != null
+                        && (actionTitle.contains("answer") || actionTitle.contains("accept")
+                        || actionTitle.contains("pick up") || actionTitle.contains("atender")
+                        || actionTitle.contains("aceptar") || actionTitle.contains("contestar")
+                        || actionTitle.contains("responder") || actionTitle.contains("join")
+                        || actionTitle.contains("unirse"))) {
+                    parsed.answerCallIntent = action.actionIntent;
+                    continue;
+                }
+                if (parsed.declineCallIntent == null && action.actionIntent != null
+                        && (actionTitle.contains("decline") || actionTitle.contains("reject")
+                        || actionTitle.contains("hang up") || actionTitle.contains("end")
+                        || actionTitle.contains("dismiss") || actionTitle.contains("rechazar")
+                        || actionTitle.contains("colgar") || actionTitle.contains("finalizar"))) {
+                    parsed.declineCallIntent = action.actionIntent;
+                    continue;
+                }
+            }
             if (parsed.markReadAction == null && (actionTitle.contains("read") || actionTitle.contains("leído") || actionTitle.contains("leido"))) {
                 parsed.markReadAction = action;
             }

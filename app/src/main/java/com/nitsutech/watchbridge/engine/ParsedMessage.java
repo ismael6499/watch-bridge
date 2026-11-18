@@ -1,6 +1,7 @@
 package com.nitsutech.watchbridge.engine;
 
 import android.app.Notification;
+import android.app.PendingIntent;
 import android.graphics.Bitmap;
 
 public class ParsedMessage {
@@ -18,6 +19,7 @@ public class ParsedMessage {
     public boolean isIncomingCall = false;
     public boolean isSourceSilent = false;
     public boolean isDeletedNotice = false;
+    public boolean isChronometerCall = false;
     public int notificationKind = 0; // 0 = KIND_CHAT, 1 = KIND_EVENT, 2 = KIND_CALL
     public boolean canReply = false;
     public boolean canMarkRead = false;
@@ -30,4 +32,6 @@ public class ParsedMessage {
 
     public Notification.Action replyAction = null;
     public Notification.Action markReadAction = null;
+    public PendingIntent answerCallIntent = null;
+    public PendingIntent declineCallIntent = null;
 }

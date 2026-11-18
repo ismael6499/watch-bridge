@@ -13,6 +13,7 @@ public class WearProtocol {
     public static final String PATH_ALERT_MSG = "/watchbridge/alert";
     public static final String PATH_AUDIO_MSG = "/watchbridge/audio_data";
     public static final String PATH_AUDIO_CHANNEL = "/watchbridge/audio_channel";
+    public static final String PATH_CALL_END_MSG = "/watchbridge/call_end";
     public static final String PATH_COMMAND = "/watchbridge/command";
 
     public static final String CMD_REQUEST_SYNC = "REQUEST_SYNC";
@@ -34,6 +35,8 @@ public class WearProtocol {
     public static final String CMD_RING_FIND_PHONE = "RING_FIND_PHONE";
     public static final String CMD_STOP_ALL_ALERTS = "STOP_ALL_ALERTS";
     public static final String CMD_STOP_CHAT_ALERT = "STOP_CHAT_ALERT";
+    public static final String CMD_ANSWER_CALL = "ANSWER_CALL";
+    public static final String CMD_DECLINE_CALL = "DECLINE_CALL";
 
     public static final int KIND_CHAT = 0;
     public static final int KIND_EVENT = 1;
@@ -122,6 +125,8 @@ public class WearProtocol {
         public boolean isRepeating;
         public boolean isGroup;
         public boolean isCall;
+        public boolean canAnswerCall;
+        public boolean canDeclineCall;
         public boolean autoTts;
         public boolean hasVoiceNote;
         public String mediaBase64;

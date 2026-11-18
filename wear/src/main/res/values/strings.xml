@@ -90,4 +90,10 @@
     <string name="wear_toast_snoozed">Snoozed 3 min</string>
     <string name="wear_toast_muted_1h">Chat muted 1 hour</string>
     <string name="wear_toast_ringing_phone">Ringing phone…</string>
+
+    <string name="wear_call_incoming">Incoming Call</string>
+    <string name="wear_call_answer">✅ Answer</string>
+    <string name="wear_call_decline">❌ Decline</string>
+    <string name="wear_call_silence">🔇 Silence Watch</string>
+    <string name="wear_channel_calls">Incoming Calls (WhatsApp / Teams)</string>
 </resources>

@@ -1,11 +1,13 @@
 package com.nitsutech.watchbridge.service;
 
+import android.app.ActivityOptions;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.text.TextUtils;
 
@@ -114,6 +116,56 @@ public class ProfileController {
                     .setPackage(context.getPackageName()));
         });
         return dispatchedToOriginalApp;
+    }
+
+    public static void executeAnswerCall(Context context, String conversationKey) {
+        ActionCache.CachedActions cached = ActionCache.get(conversationKey);
+        if (cached != null) {
+            if (!TextUtils.isEmpty(cached.originalNotificationKey)) {
+                ActionCache.clearActiveCallForSbnKey(cached.originalNotificationKey);
+            }
+            if (cached.answerCallIntent != null) {
+                sendCallPendingIntent(cached.answerCallIntent);
+            }
+        }
+        AlertAudioHelper.routeCallAudioToWatchBluetooth(context);
+        PersistentRepeatForegroundService.stopChatSession(context, conversationKey);
+        ProxyNotificationHelper.cancelNotificationForChat(context, conversationKey);
+        WearDataLayerManager.sendCallEndedAsync(context, conversationKey);
+    }
+
+    public static void executeDeclineCall(Context context, String conversationKey) {
+        ActionCache.CachedActions cached = ActionCache.get(conversationKey);
+        if (cached != null) {
+            if (!TextUtils.isEmpty(cached.originalNotificationKey)) {
+                ActionCache.clearActiveCallForSbnKey(cached.originalNotificationKey);
+            }
+            if (cached.declineCallIntent != null) {
+                sendCallPendingIntent(cached.declineCallIntent);
+            }
+        }
+        AlertAudioHelper.clearCallAudioRouting(context);
+        PersistentRepeatForegroundService.stopChatSession(context, conversationKey);
+        ProxyNotificationHelper.cancelNotificationForChat(context, conversationKey);
+        WearDataLayerManager.sendCallEndedAsync(context, conversationKey);
+    }
+
+    private static void sendCallPendingIntent(PendingIntent pi) {
+        try {
+            if (Build.VERSION.SDK_INT >= 34) {
+                ActivityOptions opts = ActivityOptions.makeBasic();
+                opts.setPendingIntentBackgroundActivityStartMode(
+                        ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED);
+                pi.send(null, 0, null, null, null, null, opts.toBundle());
+            } else {
+                pi.send();
+            }
+        } catch (Exception e) {
+            try {
+                pi.send();
+            } catch (PendingIntent.CanceledException ignored) {
+            }
+        }
     }
 
     public static void executeMarkAsRead(Context context, String conversationKey) {

@@ -96,6 +96,12 @@ public class PhoneWearListenerService extends WearableListenerService {
             case WearProtocol.CMD_STOP_ALL_ALERTS:
                 PersistentRepeatForegroundService.stopAllSessions(this);
                 break;
+            case WearProtocol.CMD_ANSWER_CALL:
+                ProfileController.executeAnswerCall(this, cmd.conversationKey);
+                break;
+            case WearProtocol.CMD_DECLINE_CALL:
+                ProfileController.executeDeclineCall(this, cmd.conversationKey);
+                break;
         }
     }
 

@@ -175,6 +175,17 @@ public class MainActivity extends AppCompatActivity {
         else if (openTab == 2) selectTab(R.id.nav_rules, false);
         else if (openTab == 3) selectTab(R.id.nav_vault, false);
         else selectTab(R.id.nav_home, false);
+
+        requestBluetoothConnectIfNeeded();
+    }
+
+    private void requestBluetoothConnectIfNeeded() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.BLUETOOTH_CONNECT)
+                    != PackageManager.PERMISSION_GRANTED) {
+                notifPermLauncher.launch(Manifest.permission.BLUETOOTH_CONNECT);
+            }
+        }
     }
 
     @SuppressLint("UnspecifiedRegisterReceiverFlag")

@@ -47,6 +47,7 @@ public class WatchWearListenerService extends WearableListenerService {
     public static final String ACTION_WATCH_STATE_UPDATED = "com.nitsutech.watchbridge.WATCH_STATE_UPDATED";
     public static final String ACTION_WATCH_ALERT_TICK = "com.nitsutech.watchbridge.WATCH_ALERT_TICK";
     public static final String ACTION_WATCH_AUDIO_READY = "com.nitsutech.watchbridge.WATCH_AUDIO_READY";
+    public static final String ACTION_WATCH_CALL_ENDED = "com.nitsutech.watchbridge.WATCH_CALL_ENDED";
     public static final String EXTRA_AUDIO_FILE_PATH = "audio_file_path";
     public static final String EXTRA_ALERT_JSON = "alert_json";
 
@@ -112,6 +113,14 @@ public class WatchWearListenerService extends WearableListenerService {
                 }
             } catch (Exception ignored) {
             }
+        } else if (WearProtocol.PATH_CALL_END_MSG.equals(path)) {
+            WatchHapticHelper.stopCallRingLoop();
+            WatchAudioHelper.stopCallRingtone();
+            WatchNotifHelper.cancelCallNotification(this);
+            if (!raw.isEmpty()) {
+                WatchNotifHelper.cancelForChat(this, raw);
+            }
+            sendBroadcast(new Intent(ACTION_WATCH_CALL_ENDED).setPackage(getPackageName()));
         }
     }
 
@@ -141,6 +150,10 @@ public class WatchWearListenerService extends WearableListenerService {
     }
 
     private void handleIncomingAlertTick(WearProtocol.AlertTickPayload tick, WearProtocol.WatchStatePayload state) {
+        if (tick.isCall || tick.notificationKind == WearProtocol.KIND_CALL) {
+            handleIncomingCall(tick);
+            return;
+        }
         WatchHapticHelper.playPattern(this, tick.hapticPattern, tick.escalationLevel);
         WatchNotifHelper.postWatchNotification(this, tick, state);
 
@@ -153,6 +166,27 @@ public class WatchWearListenerService extends WearableListenerService {
         if (tick.escalationLevel >= 3) {
             WatchAudioHelper.playEscalationChime(this);
             postEscalatedWatchNotification(tick);
+        }
+    }
+
+    private void handleIncomingCall(WearProtocol.AlertTickPayload tick) {
+        WatchHapticHelper.startCallRingLoop(this);
+        WatchAudioHelper.startCallRingtone(this);
+        WatchNotifHelper.postIncomingCallNotification(this, tick);
+
+        String caller = tick.senderName != null && !tick.senderName.isEmpty()
+                ? tick.senderName
+                : tick.conversationTitle;
+        Intent callUi = new Intent(this, com.nitsutech.watchbridge.ui.WatchCallActivity.class);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CONV_KEY, tick.conversationKey);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CALLER_NAME, caller);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_APP_LABEL, tick.appLabel);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CAN_ANSWER, tick.canAnswerCall);
+        callUi.putExtra(com.nitsutech.watchbridge.ui.WatchCallActivity.EXTRA_CAN_DECLINE, tick.canDeclineCall);
+        callUi.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        try {
+            startActivity(callUi);
+        } catch (Exception ignored) {
         }
     }
 
