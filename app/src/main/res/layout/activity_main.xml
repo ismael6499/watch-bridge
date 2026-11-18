@@ -658,6 +658,13 @@
                     android:layout_marginBottom="12dp" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/sw_repeat_all_modes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_repeat_all_modes"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/sw_progressive_escalation"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -669,6 +676,34 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/setting_phone_in_use"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/sw_save_phone_in_use_vault"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_save_phone_in_use_vault"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/sw_respect_source_muted"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_respect_source_muted"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/sw_work_mute_groups"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_work_mute_groups"
+                    android:textColor="@color/text_primary" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                    android:id="@+id/sw_sync_phone_dismiss"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setting_sync_phone_dismiss"
                     android:textColor="@color/text_primary" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
@@ -722,13 +757,59 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="8dp" />
 
-                <Button
-                    android:id="@+id/btn_export_rules_json"
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/label_escalation_attempt"
+                    android:textColor="@color/text_primary" />
+
+                <Spinner
+                    android:id="@+id/sp_escalation_attempt"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="@color/brand_primary"
-                    android:text="@string/btn_export_rules"
-                    android:textColor="#FFFFFF" />
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/label_snooze_minutes"
+                    android:textColor="@color/text_primary" />
+
+                <Spinner
+                    android:id="@+id/sp_snooze_minutes"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="10dp" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_export_rules_json"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="6dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="@color/brand_primary"
+                        android:text="@string/btn_export_rules"
+                        android:textColor="#FFFFFF"
+                        android:textSize="12sp" />
+
+                    <Button
+                        android:id="@+id/btn_import_rules_json"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:layout_weight="1"
+                        android:text="@string/btn_import_rules"
+                        android:textColor="@color/brand_primary"
+                        android:textSize="12sp" />
+                </LinearLayout>
             </LinearLayout>
         </ScrollView>
     </FrameLayout>

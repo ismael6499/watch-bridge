@@ -45,7 +45,8 @@ public class ProxyActionReceiver extends BroadcastReceiver {
         } else if (ACTION_MARK_READ.equals(action)) {
             ProfileController.executeMarkAsRead(context, convKey);
         } else if (ACTION_SNOOZE_3M.equals(action)) {
-            ProfileController.snoozeChat(context, convKey, 3);
+            int mins = new PrefsManager(context).getDefaultSnoozeMinutes();
+            ProfileController.snoozeChat(context, convKey, mins);
         } else if (ACTION_STOP_CHAT_ALERT.equals(action)) {
             PersistentRepeatForegroundService.stopChatSession(context, convKey);
         } else if (ACTION_END_REPEAT_MODE.equals(action) || ACTION_WIDGET_TOGGLE_REPEAT.equals(action)) {

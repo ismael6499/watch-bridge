@@ -146,8 +146,13 @@
     <string name="filter_coalesced">❄️ Ráfagas Agrupadas</string>
     <string name="filter_after_hours">🌙 Post-Trabajo</string>
     <string name="btn_clear_all">Vaciar Lista Actual</string>
-    <string name="setting_progressive_escalation">Escalado Progresivo (Intento 3+ sube alarma y brillo del reloj)</string>
+    <string name="setting_repeat_all_modes">Permitir alertas repetitivas en todos los modos (no solo Repetir)</string>
+    <string name="setting_progressive_escalation">Escalado Progresivo (sube alarma y vibración del reloj)</string>
     <string name="setting_phone_in_use">Pausa Inteligente si usás el celular desbloqueado (Modo Normal)</string>
+    <string name="setting_save_phone_in_use_vault">Guardar en Bóveda mensajes pausados con el celular en mano</string>
+    <string name="setting_respect_source_muted">Respetar chats silenciados (sin vibrar ni repetir)</string>
+    <string name="setting_work_mute_groups">En Modo Trabajo: silenciar chats de grupo en el Reloj</string>
+    <string name="setting_sync_phone_dismiss">Detener alerta del Reloj al limpiar notificación en Celular</string>
     <string name="setting_auto_tts">Leer mensaje en voz alta por el reloj en Intento 3+</string>
     <string name="setting_call_boost">Refuerzo de Llamadas (repetir cada 4s en Teams/WhatsApp en Modo Persistente)</string>
     <string name="setting_auto_after_hours">Horario Post-Trabajo Automático (Lun-Vie 18:00 - 09:00)</string>
@@ -164,11 +169,30 @@
     <string name="dlg_ah_apps_title">Apps silenciadas en Reloj (se guardan acá en Bóveda):</string>
     <string name="setting_phone_bridge_notif">Mostrar también notificaciones de WatchBridge en el celular (modo Galaxy Wearable)</string>
     <string name="label_max_repeat">Límite Máximo de Repetición</string>
+    <string name="max_repeat_1m">1 minuto</string>
+    <string name="max_repeat_2m">2 minutos</string>
     <string name="max_repeat_3m">3 minutos</string>
     <string name="max_repeat_5m">5 minutos</string>
     <string name="max_repeat_10m">10 minutos</string>
+    <string name="max_repeat_15m">15 minutos</string>
     <string name="max_repeat_unlimited">Sin límite</string>
+    <string name="label_escalation_attempt">Escalar Alarma/Reloj en Intento</string>
+    <string name="esc_attempt_2">Intento 2</string>
+    <string name="esc_attempt_3">Intento 3 (Default)</string>
+    <string name="esc_attempt_4">Intento 4</string>
+    <string name="esc_attempt_5">Intento 5</string>
+    <string name="label_snooze_minutes">Duración al Posponer en Celular</string>
+    <string name="snooze_2m">2 minutos</string>
+    <string name="snooze_3m">3 minutos (Default)</string>
+    <string name="snooze_5m">5 minutos</string>
+    <string name="snooze_10m">10 minutos</string>
+    <string name="snooze_15m">15 minutos</string>
     <string name="btn_export_rules">Exportar Reglas JSON</string>
+    <string name="btn_import_rules">Importar Reglas JSON</string>
+    <string name="btn_copy">Copiar</string>
+    <string name="toast_copied">Copiado al portapapeles</string>
+    <string name="hint_paste_rules_json">Pegá acá el JSON exportado</string>
+    <string name="toast_import_error">Formato JSON inválido</string>
 
     <!-- Widgets -->
     <string name="widget_compact_name">WatchBridge Repetir 1x1</string>

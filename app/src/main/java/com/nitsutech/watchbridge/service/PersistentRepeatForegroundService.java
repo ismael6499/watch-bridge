@@ -281,8 +281,14 @@ public class PersistentRepeatForegroundService extends Service {
     private void executeRepeatTick(ActiveSession session) {
         PrefsManager prefs = new PrefsManager(this);
 
-        // Stop if Repeat mode was turned off and this was a repeat session (unless incoming call or snoozed test)
-        if (!prefs.isRepeatMode() && !session.conversationKey.startsWith("test|")) {
+        // Stop if Repeat mode was turned off (unless repeating in all modes is enabled, or call/test)
+        boolean afterHoursMutedApp = prefs.getActiveProfile() == PrefsManager.PROFILE_AFTER_HOURS
+                && prefs.isPackageMutedInAfterHours(session.packageName);
+        boolean repeatAllowed = prefs.isRepeatMode()
+                || (prefs.isRepeatInAllModesEnabled() && !afterHoursMutedApp)
+                || session.isCall
+                || session.conversationKey.startsWith("test|");
+        if (!repeatAllowed) {
             stopChatSession(this, session.conversationKey);
             return;
         }
@@ -305,9 +311,9 @@ public class PersistentRepeatForegroundService extends Service {
 
         session.attemptCount++;
         boolean progressive = prefs.isProgressiveEscalationEnabled();
-        // Idea #8: Attempt 1-2 = gentle (level 1-2), Attempt 3+ = escalated wake-up (level 3)
+        int escalateAt = prefs.getEscalationAttemptThreshold();
         int escalationLevel = progressive
-                ? (session.attemptCount >= 3 ? 3 : session.attemptCount)
+                ? (session.attemptCount >= escalateAt ? 3 : session.attemptCount)
                 : 1;
         boolean escalated = escalationLevel >= 3;
 
@@ -405,11 +411,17 @@ public class PersistentRepeatForegroundService extends Service {
         );
 
         Intent stopAll = new Intent(this, ProxyActionReceiver.class);
-        stopAll.setAction(ProxyActionReceiver.ACTION_END_REPEAT_MODE);
+        stopAll.setAction(prefs.isRepeatMode()
+                ? ProxyActionReceiver.ACTION_END_REPEAT_MODE
+                : ProxyActionReceiver.ACTION_WIDGET_STOP_ALERTS);
         PendingIntent stopPi = PendingIntent.getBroadcast(
                 this, 11, stopAll,
                 PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
         );
+
+        String stopLabel = prefs.isRepeatMode()
+                ? getString(R.string.action_end_repeat)
+                : getString(R.string.action_stop_alert);
 
         return new NotificationCompat.Builder(this, WatchBridgeApp.CHANNEL_SERVICE)
                 .setSmallIcon(R.drawable.ic_watch_bridge)
@@ -417,7 +429,7 @@ public class PersistentRepeatForegroundService extends Service {
                 .setContentText(body)
                 .setOngoing(true)
                 .setContentIntent(contentPi)
-                .addAction(R.drawable.ic_stop, getString(R.string.action_end_repeat), stopPi)
+                .addAction(R.drawable.ic_stop, stopLabel, stopPi)
                 .build();
     }
 

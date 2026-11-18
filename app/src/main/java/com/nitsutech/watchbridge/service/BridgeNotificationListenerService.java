@@ -71,6 +71,10 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         }
 
         // 2. If original app notification was read/cleared on phone
+        PrefsManager prefs = new PrefsManager(this);
+        if (!prefs.isSyncDismissOnPhoneClearEnabled()) {
+            return;
+        }
         String origConvKey = ActionCache.getConversationKeyForSbnKey(sbn.getKey());
         if (!TextUtils.isEmpty(origConvKey)) {
             PersistentRepeatForegroundService.stopChatSession(this, origConvKey);
@@ -108,7 +112,9 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         long now = System.currentTimeMillis();
         RuleEvaluator.Decision decision = RuleEvaluator.evaluate(this, parsed, appRule, senderRules, prefs, now);
 
-        if (!decision.shouldBridge && !decision.coalescedByCooldown && !decision.suppressedAfterHours) {
+        boolean saveSilently = decision.suppressedAfterHours
+                || (decision.suppressedPhoneInUse && prefs.isSavePhoneInUseToVaultEnabled());
+        if (!decision.shouldBridge && !decision.coalescedByCooldown && !saveSilently) {
             return;
         }
 
@@ -127,7 +133,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         entity.canMarkRead = parsed.canMarkRead;
         entity.isDeletedBySender = false;
         entity.isRead = false;
-        entity.isDismissed = decision.suppressedAfterHours;
+        entity.isDismissed = saveSilently;
         entity.wasCoalesced = decision.coalescedByCooldown;
         entity.isAfterHoursMuted = decision.suppressedAfterHours;
         entity.mediaPath = parsed.mediaPath;
@@ -136,7 +142,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         entity.voiceNoteUri = parsed.voiceNoteUri;
         db.chatMessageDao().insert(entity);
 
-        if (decision.suppressedAfterHours) {
+        if (saveSilently) {
             sendBroadcast(new Intent(PersistentRepeatForegroundService.ACTION_STATE_BROADCAST).setPackage(getPackageName()));
             return;
         }

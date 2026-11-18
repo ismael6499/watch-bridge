@@ -41,6 +41,7 @@ public class RuleEvaluator {
         boolean repeatMode = profile == PrefsManager.PROFILE_REPEAT;
         boolean workMode = profile == PrefsManager.PROFILE_WORK;
         boolean afterHoursMode = profile == PrefsManager.PROFILE_AFTER_HOURS;
+        boolean allowRepeatNow = repeatMode || prefs.isRepeatInAllModesEnabled();
 
         // 1. Check urgent keywords
         d.isUrgentKeyword = containsUrgentKeyword(msg.senderName + " " + msg.messageText, prefs.getUrgentKeywordsList());
@@ -57,7 +58,7 @@ public class RuleEvaluator {
                 return d;
             }
             d.shouldBridge = true;
-            d.shouldRepeat = repeatMode && (matchedSender.actionMode == 0 || d.isVip || d.isUrgentKeyword);
+            d.shouldRepeat = allowRepeatNow && (matchedSender.actionMode == 0 || d.isVip || d.isUrgentKeyword);
             d.phoneSoundMode = matchedSender.phoneAlarmOverride ? 2 : appRule.phoneSoundMode;
             d.hapticPattern = (d.isVip || d.isUrgentKeyword) ? 3 : appRule.hapticPattern;
         } else {
@@ -74,15 +75,15 @@ public class RuleEvaluator {
             d.shouldBridge = true;
             d.matchedRuleName = appRule.appName + (msg.isGroup ? " (Group)" : " (Direct)");
             boolean typeRepeat = msg.isGroup ? appRule.groupRepeatEnabled : appRule.directRepeatEnabled;
-            d.shouldRepeat = repeatMode && (typeRepeat || d.isUrgentKeyword || msg.isIncomingCall);
+            d.shouldRepeat = allowRepeatNow && (typeRepeat || d.isUrgentKeyword || msg.isIncomingCall);
             d.repeatIntervalSec = msg.isGroup ? Math.max(3, appRule.groupRepeatIntervalSec) : Math.max(3, appRule.directRepeatIntervalSec);
             d.cooldownSec = msg.isGroup ? Math.max(0, appRule.groupCooldownSec) : Math.max(0, appRule.directCooldownSec);
             d.phoneSoundMode = appRule.phoneSoundMode;
             d.hapticPattern = msg.isGroup ? 2 : appRule.hapticPattern;
         }
 
-        // Call Boost during Repeat Mode
-        if (msg.isIncomingCall && repeatMode && prefs.isCallBoostEnabled()) {
+        // Call Boost during Repeat Mode (or whenever repeating across modes is enabled)
+        if (msg.isIncomingCall && allowRepeatNow && prefs.isCallBoostEnabled()) {
             d.shouldBridge = true;
             d.shouldRepeat = true;
             d.repeatIntervalSec = 4;
@@ -93,6 +94,14 @@ public class RuleEvaluator {
 
         // Temporary Chat Mute check (can only be bypassed by VIP or incoming call)
         if (prefs.isChatMuted(msg.conversationKey) && !d.isVip && !msg.isIncomingCall) {
+            d.shouldBridge = false;
+            d.shouldRepeat = false;
+            return d;
+        }
+
+        // Work Focus optional Group Chat mute
+        if (workMode && msg.isGroup && prefs.isWorkMuteGroupsEnabled()
+                && !d.isVip && !d.isUrgentKeyword && !msg.isIncomingCall) {
             d.shouldBridge = false;
             d.shouldRepeat = false;
             return d;
@@ -117,7 +126,8 @@ public class RuleEvaluator {
 
         // Source chat is muted / silent (no sound & no vibration in WhatsApp/Teams):
         // Bridge normally to thread & watch without repeating and without vibrating the watch.
-        if (msg.isSourceSilent && !d.isVip && !d.isUrgentKeyword && !msg.isIncomingCall) {
+        if (msg.isSourceSilent && prefs.isRespectSourceMutedEnabled()
+                && !d.isVip && !d.isUrgentKeyword && !msg.isIncomingCall) {
             d.sourceSilent = true;
             d.shouldRepeat = false;
             d.phoneSoundMode = 0;

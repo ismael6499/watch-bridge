@@ -49,6 +49,13 @@ public class PrefsManager {
     private static final String KEY_PHONE_BRIDGE_NOTIF = "phone_bridge_notif_enabled";
     private static final String KEY_REPEAT_POSTED_NOTIFS = "repeat_summary_notifs";
     private static final String KEY_REPEAT_BURSTS_ABSORBED = "repeat_summary_bursts";
+    private static final String KEY_REPEAT_ALL_MODES = "repeat_in_all_modes";
+    private static final String KEY_SAVE_PHONE_IN_USE_VAULT = "save_phone_in_use_vault";
+    private static final String KEY_RESPECT_SOURCE_MUTED = "respect_source_muted";
+    private static final String KEY_WORK_MUTE_GROUPS = "work_mute_groups";
+    private static final String KEY_SYNC_PHONE_DISMISS = "sync_phone_dismiss";
+    private static final String KEY_ESCALATION_ATTEMPT = "escalation_attempt_threshold";
+    private static final String KEY_DEFAULT_SNOOZE_MIN = "default_snooze_minutes";
 
     private static final String DEFAULT_KEYWORDS = "urgent, urgente, deploy, produccion, producción, caido, caído, llamame, call me";
     public static final String DEFAULT_TEAMS_REPLIES_ES = "Ahí lo reviso|Dame 10 minutos|Estoy en reunión, ya te respondo|Ok, gracias";
@@ -147,6 +154,62 @@ public class PrefsManager {
 
     public void setPhoneBridgeNotifEnabled(boolean enabled) {
         prefs.edit().putBoolean(KEY_PHONE_BRIDGE_NOTIF, enabled).apply();
+    }
+
+    public boolean isRepeatInAllModesEnabled() {
+        return prefs.getBoolean(KEY_REPEAT_ALL_MODES, false);
+    }
+
+    public void setRepeatInAllModesEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_REPEAT_ALL_MODES, enabled).apply();
+    }
+
+    public boolean isSavePhoneInUseToVaultEnabled() {
+        return prefs.getBoolean(KEY_SAVE_PHONE_IN_USE_VAULT, true);
+    }
+
+    public void setSavePhoneInUseToVaultEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_SAVE_PHONE_IN_USE_VAULT, enabled).apply();
+    }
+
+    public boolean isRespectSourceMutedEnabled() {
+        return prefs.getBoolean(KEY_RESPECT_SOURCE_MUTED, true);
+    }
+
+    public void setRespectSourceMutedEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_RESPECT_SOURCE_MUTED, enabled).apply();
+    }
+
+    public boolean isWorkMuteGroupsEnabled() {
+        return prefs.getBoolean(KEY_WORK_MUTE_GROUPS, false);
+    }
+
+    public void setWorkMuteGroupsEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_WORK_MUTE_GROUPS, enabled).apply();
+    }
+
+    public boolean isSyncDismissOnPhoneClearEnabled() {
+        return prefs.getBoolean(KEY_SYNC_PHONE_DISMISS, true);
+    }
+
+    public void setSyncDismissOnPhoneClearEnabled(boolean enabled) {
+        prefs.edit().putBoolean(KEY_SYNC_PHONE_DISMISS, enabled).apply();
+    }
+
+    public int getEscalationAttemptThreshold() {
+        return Math.max(2, prefs.getInt(KEY_ESCALATION_ATTEMPT, 3));
+    }
+
+    public void setEscalationAttemptThreshold(int attempt) {
+        prefs.edit().putInt(KEY_ESCALATION_ATTEMPT, Math.max(2, attempt)).apply();
+    }
+
+    public int getDefaultSnoozeMinutes() {
+        return Math.max(1, prefs.getInt(KEY_DEFAULT_SNOOZE_MIN, 3));
+    }
+
+    public void setDefaultSnoozeMinutes(int minutes) {
+        prefs.edit().putInt(KEY_DEFAULT_SNOOZE_MIN, Math.max(1, minutes)).apply();
     }
 
     public boolean isAutoAfterHoursEnabled() {

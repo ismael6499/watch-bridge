@@ -4,6 +4,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -42,6 +44,10 @@ import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.reflect.TypeToken;
 import com.nitsutech.watchbridge.R;
 import com.nitsutech.watchbridge.data.AppDatabase;
 import com.nitsutech.watchbridge.data.AppRuleEntity;
@@ -105,14 +111,21 @@ public class MainActivity extends AppCompatActivity {
     private VaultHistoryAdapter vaultAdapter;
     private ChipGroup cgVaultFilter;
     private int currentVaultFilter = 0; // 0 = All, 1 = Deleted Vault, 2 = Coalesced
+    private SwitchMaterial swRepeatAllModes;
     private SwitchMaterial swProgressiveEscalation;
     private SwitchMaterial swPhoneInUseSuppression;
+    private SwitchMaterial swSavePhoneInUseVault;
+    private SwitchMaterial swRespectSourceMuted;
+    private SwitchMaterial swWorkMuteGroups;
+    private SwitchMaterial swSyncPhoneDismiss;
     private SwitchMaterial swAutoTtsRepeat;
     private SwitchMaterial swCallBoost;
     private SwitchMaterial swAutoAfterHours;
     private Button btnConfigAfterHours;
     private SwitchMaterial swPhoneBridgeNotif;
     private Spinner spMaxRepeatMinutes;
+    private Spinner spEscalationAttempt;
+    private Spinner spSnoozeMinutes;
 
     private final ActivityResultLauncher<String> notifPermLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> refreshUi());
@@ -207,14 +220,21 @@ public class MainActivity extends AppCompatActivity {
         etWaReplies = findViewById(R.id.et_wa_replies);
 
         cgVaultFilter = findViewById(R.id.cg_vault_filter);
+        swRepeatAllModes = findViewById(R.id.sw_repeat_all_modes);
         swProgressiveEscalation = findViewById(R.id.sw_progressive_escalation);
         swPhoneInUseSuppression = findViewById(R.id.sw_phone_in_use_suppression);
+        swSavePhoneInUseVault = findViewById(R.id.sw_save_phone_in_use_vault);
+        swRespectSourceMuted = findViewById(R.id.sw_respect_source_muted);
+        swWorkMuteGroups = findViewById(R.id.sw_work_mute_groups);
+        swSyncPhoneDismiss = findViewById(R.id.sw_sync_phone_dismiss);
         swAutoTtsRepeat = findViewById(R.id.sw_auto_tts_repeat);
         swCallBoost = findViewById(R.id.sw_call_boost);
         swAutoAfterHours = findViewById(R.id.sw_auto_after_hours);
         btnConfigAfterHours = findViewById(R.id.btn_config_after_hours);
         swPhoneBridgeNotif = findViewById(R.id.sw_phone_bridge_notif);
         spMaxRepeatMinutes = findViewById(R.id.sp_max_repeat_minutes);
+        spEscalationAttempt = findViewById(R.id.sp_escalation_attempt);
+        spSnoozeMinutes = findViewById(R.id.sp_snooze_minutes);
     }
 
     private void setupNavigationAndBackStack() {
@@ -434,11 +454,26 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        swRepeatAllModes.setChecked(prefs.isRepeatInAllModesEnabled());
+        swRepeatAllModes.setOnCheckedChangeListener((b, c) -> prefs.setRepeatInAllModesEnabled(c));
+
         swProgressiveEscalation.setChecked(prefs.isProgressiveEscalationEnabled());
         swProgressiveEscalation.setOnCheckedChangeListener((b, c) -> prefs.setProgressiveEscalationEnabled(c));
 
         swPhoneInUseSuppression.setChecked(prefs.isPhoneInUseSuppressionEnabled());
         swPhoneInUseSuppression.setOnCheckedChangeListener((b, c) -> prefs.setPhoneInUseSuppressionEnabled(c));
+
+        swSavePhoneInUseVault.setChecked(prefs.isSavePhoneInUseToVaultEnabled());
+        swSavePhoneInUseVault.setOnCheckedChangeListener((b, c) -> prefs.setSavePhoneInUseToVaultEnabled(c));
+
+        swRespectSourceMuted.setChecked(prefs.isRespectSourceMutedEnabled());
+        swRespectSourceMuted.setOnCheckedChangeListener((b, c) -> prefs.setRespectSourceMutedEnabled(c));
+
+        swWorkMuteGroups.setChecked(prefs.isWorkMuteGroupsEnabled());
+        swWorkMuteGroups.setOnCheckedChangeListener((b, c) -> prefs.setWorkMuteGroupsEnabled(c));
+
+        swSyncPhoneDismiss.setChecked(prefs.isSyncDismissOnPhoneClearEnabled());
+        swSyncPhoneDismiss.setOnCheckedChangeListener((b, c) -> prefs.setSyncDismissOnPhoneClearEnabled(c));
 
         swAutoTtsRepeat.setChecked(prefs.isAutoTtsInRepeatEnabled());
         swAutoTtsRepeat.setOnCheckedChangeListener((b, c) -> prefs.setAutoTtsInRepeatEnabled(c));
@@ -459,20 +494,87 @@ public class MainActivity extends AppCompatActivity {
         swPhoneBridgeNotif.setChecked(prefs.isPhoneBridgeNotifEnabled());
         swPhoneBridgeNotif.setOnCheckedChangeListener((b, c) -> prefs.setPhoneBridgeNotifEnabled(c));
 
+        final int[] maxValues = new int[]{1, 2, 3, 5, 10, 15, 0};
         String[] maxOpts = new String[]{
+                getString(R.string.max_repeat_1m),
+                getString(R.string.max_repeat_2m),
                 getString(R.string.max_repeat_3m),
                 getString(R.string.max_repeat_5m),
                 getString(R.string.max_repeat_10m),
+                getString(R.string.max_repeat_15m),
                 getString(R.string.max_repeat_unlimited)
         };
         spMaxRepeatMinutes.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, maxOpts));
         int maxMin = prefs.getMaxRepeatMinutes();
-        spMaxRepeatMinutes.setSelection(maxMin == 3 ? 0 : (maxMin == 10 ? 2 : (maxMin == 0 ? 3 : 1)));
+        int maxIdx = 3; // default 5m
+        for (int i = 0; i < maxValues.length; i++) {
+            if (maxValues[i] == maxMin) {
+                maxIdx = i;
+                break;
+            }
+        }
+        spMaxRepeatMinutes.setSelection(maxIdx);
         spMaxRepeatMinutes.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
-                int val = pos == 0 ? 3 : (pos == 1 ? 5 : (pos == 2 ? 10 : 0));
-                prefs.setMaxRepeatMinutes(val);
+                prefs.setMaxRepeatMinutes(maxValues[pos]);
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+
+        final int[] escValues = new int[]{2, 3, 4, 5};
+        String[] escOpts = new String[]{
+                getString(R.string.esc_attempt_2),
+                getString(R.string.esc_attempt_3),
+                getString(R.string.esc_attempt_4),
+                getString(R.string.esc_attempt_5)
+        };
+        spEscalationAttempt.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, escOpts));
+        int escVal = prefs.getEscalationAttemptThreshold();
+        int escIdx = 1;
+        for (int i = 0; i < escValues.length; i++) {
+            if (escValues[i] == escVal) {
+                escIdx = i;
+                break;
+            }
+        }
+        spEscalationAttempt.setSelection(escIdx);
+        spEscalationAttempt.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
+                prefs.setEscalationAttemptThreshold(escValues[pos]);
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+
+        final int[] snoozeValues = new int[]{2, 3, 5, 10, 15};
+        String[] snoozeOpts = new String[]{
+                getString(R.string.snooze_2m),
+                getString(R.string.snooze_3m),
+                getString(R.string.snooze_5m),
+                getString(R.string.snooze_10m),
+                getString(R.string.snooze_15m)
+        };
+        spSnoozeMinutes.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, snoozeOpts));
+        int snoozeVal = prefs.getDefaultSnoozeMinutes();
+        int snoozeIdx = 1;
+        for (int i = 0; i < snoozeValues.length; i++) {
+            if (snoozeValues[i] == snoozeVal) {
+                snoozeIdx = i;
+                break;
+            }
+        }
+        spSnoozeMinutes.setSelection(snoozeIdx);
+        spSnoozeMinutes.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
+                prefs.setDefaultSnoozeMinutes(snoozeValues[pos]);
             }
 
             @Override
@@ -481,6 +583,7 @@ public class MainActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btn_export_rules_json).setOnClickListener(v -> showExportJsonDialog());
+        findViewById(R.id.btn_import_rules_json).setOnClickListener(v -> showImportJsonDialog());
     }
 
     private void refreshUi() {
@@ -905,9 +1008,72 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(() -> new AlertDialog.Builder(this)
                     .setTitle(R.string.btn_export_rules)
                     .setMessage(json)
+                    .setNeutralButton(R.string.btn_copy, (d, w) -> {
+                        ClipboardManager cm = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                        if (cm != null) {
+                            cm.setPrimaryClip(ClipData.newPlainText("WatchBridgeRules", json));
+                            Toast.makeText(this, R.string.toast_copied, Toast.LENGTH_SHORT).show();
+                        }
+                    })
                     .setPositiveButton(R.string.btn_ok, null)
                     .show());
         });
+    }
+
+    private void showImportJsonDialog() {
+        EditText input = new EditText(this);
+        input.setHint(R.string.hint_paste_rules_json);
+        input.setMinLines(6);
+        input.setMaxLines(12);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.btn_import_rules)
+                .setView(input)
+                .setPositiveButton(R.string.btn_save, (d, w) -> {
+                    String raw = input.getText().toString().trim();
+                    if (raw.isEmpty()) return;
+                    db.executor().execute(() -> {
+                        try {
+                            Gson gson = new Gson();
+                            JsonElement el = JsonParser.parseString(raw);
+                            JsonObject obj = el.getAsJsonObject();
+                            if (obj.has("appRules") && obj.get("appRules").isJsonArray()) {
+                                List<AppRuleEntity> importedApps = gson.fromJson(
+                                        obj.get("appRules"),
+                                        new TypeToken<List<AppRuleEntity>>() {}.getType()
+                                );
+                                if (importedApps != null) {
+                                    for (AppRuleEntity r : importedApps) {
+                                        if (r != null && !TextUtils.isEmpty(r.packageName)) {
+                                            db.appRuleDao().upsert(r);
+                                        }
+                                    }
+                                }
+                            }
+                            if (obj.has("senderRules") && obj.get("senderRules").isJsonArray()) {
+                                List<SenderRuleEntity> importedSenders = gson.fromJson(
+                                        obj.get("senderRules"),
+                                        new TypeToken<List<SenderRuleEntity>>() {}.getType()
+                                );
+                                if (importedSenders != null) {
+                                    for (SenderRuleEntity sr : importedSenders) {
+                                        if (sr != null && !TextUtils.isEmpty(sr.senderOrChatName)) {
+                                            db.senderRuleDao().upsert(sr);
+                                        }
+                                    }
+                                }
+                            }
+                            WearDataLayerManager.syncStateBlocking(this);
+                            runOnUiThread(() -> {
+                                refreshUi();
+                                Toast.makeText(this, R.string.toast_saved, Toast.LENGTH_SHORT).show();
+                            });
+                        } catch (Exception e) {
+                            runOnUiThread(() -> Toast.makeText(this, R.string.toast_import_error, Toast.LENGTH_SHORT).show());
+                        }
+                    });
+                })
+                .setNegativeButton(R.string.btn_cancel, null)
+                .show();
     }
 
     private boolean isNotificationListenerEnabled() {
