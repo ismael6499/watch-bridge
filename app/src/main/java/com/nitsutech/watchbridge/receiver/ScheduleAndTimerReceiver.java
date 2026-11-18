@@ -49,7 +49,7 @@ public class ScheduleAndTimerReceiver extends BroadcastReceiver {
             }
             scheduleAutoAfterHoursAlarms(context, prefs);
         } else if (ACTION_AFTER_HOURS_END.equals(action)) {
-            if (prefs.isAutoAfterHoursEnabled() && shouldRunToday(prefs)) {
+            if (prefs.isAutoAfterHoursEnabled()) {
                 if (prefs.getActiveProfile() == PrefsManager.PROFILE_AFTER_HOURS) {
                     ProfileController.setProfile(context, PrefsManager.PROFILE_NORMAL, 0);
                 }
@@ -58,10 +58,61 @@ public class ScheduleAndTimerReceiver extends BroadcastReceiver {
         }
     }
 
+    private static boolean shouldRunDay(int dayOfWeek, boolean weekdaysOnly) {
+        if (!weekdaysOnly) return true;
+        return dayOfWeek >= Calendar.MONDAY && dayOfWeek <= Calendar.FRIDAY;
+    }
+
     private boolean shouldRunToday(PrefsManager prefs) {
-        if (!prefs.isAfterHoursWeekdaysOnly()) return true;
-        int dow = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-        return dow >= Calendar.MONDAY && dow <= Calendar.FRIDAY;
+        return shouldRunDay(Calendar.getInstance().get(Calendar.DAY_OF_WEEK), prefs.isAfterHoursWeekdaysOnly());
+    }
+
+    public static boolean isWithinAfterHoursWindow(
+            int nowDow, int nowMinutesOfDay,
+            int startHour, int startMin,
+            int endHour, int endMin,
+            boolean weekdaysOnly
+    ) {
+        int startTotal = startHour * 60 + startMin;
+        int endTotal = endHour * 60 + endMin;
+        if (startTotal == endTotal) {
+            return false;
+        }
+        if (startTotal < endTotal) {
+            return shouldRunDay(nowDow, weekdaysOnly)
+                    && nowMinutesOfDay >= startTotal
+                    && nowMinutesOfDay < endTotal;
+        }
+        // Overnight window (e.g., 18:00 -> 09:00): evening matches today, morning matches yesterday's start day
+        if (nowMinutesOfDay >= startTotal && shouldRunDay(nowDow, weekdaysOnly)) {
+            return true;
+        }
+        int prevDow = nowDow == Calendar.SUNDAY ? Calendar.SATURDAY : nowDow - 1;
+        return nowMinutesOfDay < endTotal && shouldRunDay(prevDow, weekdaysOnly);
+    }
+
+    public static void evaluateNowAndReschedule(Context context, PrefsManager prefs) {
+        scheduleAutoAfterHoursAlarms(context, prefs);
+        if (!prefs.isAutoAfterHoursEnabled()) {
+            return;
+        }
+        Calendar now = Calendar.getInstance();
+        int nowMin = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE);
+        boolean activeNow = isWithinAfterHoursWindow(
+                now.get(Calendar.DAY_OF_WEEK),
+                nowMin,
+                prefs.getAfterHoursStartHour(),
+                prefs.getAfterHoursStartMin(),
+                prefs.getAfterHoursEndHour(),
+                prefs.getAfterHoursEndMin(),
+                prefs.isAfterHoursWeekdaysOnly()
+        );
+        int curProfile = prefs.getActiveProfile();
+        if (activeNow && (curProfile == PrefsManager.PROFILE_NORMAL || curProfile == PrefsManager.PROFILE_WORK)) {
+            ProfileController.setProfile(context, PrefsManager.PROFILE_AFTER_HOURS, 0);
+        } else if (!activeNow && curProfile == PrefsManager.PROFILE_AFTER_HOURS) {
+            ProfileController.setProfile(context, PrefsManager.PROFILE_NORMAL, 0);
+        }
     }
 
     public static void scheduleRepeatAutoOff(Context context, long triggerAtMs) {

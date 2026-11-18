@@ -20,6 +20,7 @@ public class RuleEvaluator {
         public boolean sourceSilent = false;
         public boolean coalescedByCooldown = false;
         public boolean suppressedPhoneInUse = false;
+        public boolean suppressedAfterHours = false;
         public boolean isVip = false;
         public boolean isUrgentKeyword = false;
         public int repeatIntervalSec = 12;
@@ -64,9 +65,6 @@ public class RuleEvaluator {
             if (!appRule.enabled && !d.isUrgentKeyword) {
                 return d;
             }
-            if (afterHoursMode && AppDatabase.PKG_TEAMS.equals(msg.packageName) && !d.isUrgentKeyword) {
-                return d;
-            }
 
             boolean typeEnabled = msg.isGroup ? appRule.groupEnabled : appRule.directEnabled;
             if (!typeEnabled && !d.isUrgentKeyword) {
@@ -97,6 +95,15 @@ public class RuleEvaluator {
         if (prefs.isChatMuted(msg.conversationKey) && !d.isVip && !msg.isIncomingCall) {
             d.shouldBridge = false;
             d.shouldRepeat = false;
+            return d;
+        }
+
+        // After-Hours silenced app check: do not alert Watch/Phone, but flag so service still saves message to app history
+        if (afterHoursMode && prefs.isPackageMutedInAfterHours(msg.packageName)
+                && !d.isVip && !d.isUrgentKeyword && !msg.isIncomingCall) {
+            d.shouldBridge = false;
+            d.shouldRepeat = false;
+            d.suppressedAfterHours = true;
             return d;
         }
 

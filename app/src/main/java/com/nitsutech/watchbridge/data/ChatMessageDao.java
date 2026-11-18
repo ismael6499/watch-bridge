@@ -35,6 +35,9 @@ public interface ChatMessageDao {
     @Query("SELECT * FROM chat_messages WHERE wasCoalesced = 1 ORDER BY timestamp DESC LIMIT 100")
     List<ChatMessageEntity> getCoalescedSync();
 
+    @Query("SELECT * FROM chat_messages WHERE isAfterHoursMuted = 1 ORDER BY timestamp DESC LIMIT 100")
+    List<ChatMessageEntity> getAfterHoursSync();
+
     @Query("SELECT * FROM chat_messages WHERE id = :id LIMIT 1")
     ChatMessageEntity getByIdSync(long id);
 

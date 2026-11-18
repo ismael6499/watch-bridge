@@ -2,6 +2,7 @@ package com.nitsutech.watchbridge.ui;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.app.TimePickerDialog;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -57,7 +58,10 @@ import com.nitsutech.watchbridge.wear.WearDataLayerManager;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -106,6 +110,7 @@ public class MainActivity extends AppCompatActivity {
     private SwitchMaterial swAutoTtsRepeat;
     private SwitchMaterial swCallBoost;
     private SwitchMaterial swAutoAfterHours;
+    private Button btnConfigAfterHours;
     private SwitchMaterial swPhoneBridgeNotif;
     private Spinner spMaxRepeatMinutes;
 
@@ -207,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
         swAutoTtsRepeat = findViewById(R.id.sw_auto_tts_repeat);
         swCallBoost = findViewById(R.id.sw_call_boost);
         swAutoAfterHours = findViewById(R.id.sw_auto_after_hours);
+        btnConfigAfterHours = findViewById(R.id.btn_config_after_hours);
         swPhoneBridgeNotif = findViewById(R.id.sw_phone_bridge_notif);
         spMaxRepeatMinutes = findViewById(R.id.sp_max_repeat_minutes);
     }
@@ -411,6 +417,7 @@ public class MainActivity extends AppCompatActivity {
             int id = checkedIds.get(0);
             if (id == R.id.chip_vault_deleted) currentVaultFilter = 1;
             else if (id == R.id.chip_vault_coalesced) currentVaultFilter = 2;
+            else if (id == R.id.chip_vault_after_hours) currentVaultFilter = 3;
             else currentVaultFilter = 0;
             loadVaultHistoryAsync();
         });
@@ -440,10 +447,14 @@ public class MainActivity extends AppCompatActivity {
         swCallBoost.setOnCheckedChangeListener((b, c) -> prefs.setCallBoostEnabled(c));
 
         swAutoAfterHours.setChecked(prefs.isAutoAfterHoursEnabled());
+        updateAfterHoursSummaryLabel();
         swAutoAfterHours.setOnCheckedChangeListener((b, c) -> {
             prefs.setAutoAfterHoursEnabled(c);
-            ScheduleAndTimerReceiver.scheduleAutoAfterHoursAlarms(this, prefs);
+            ScheduleAndTimerReceiver.evaluateNowAndReschedule(this, prefs);
+            updateHomeDashboard();
         });
+
+        btnConfigAfterHours.setOnClickListener(v -> showConfigureAfterHoursDialog());
 
         swPhoneBridgeNotif.setChecked(prefs.isPhoneBridgeNotifEnabled());
         swPhoneBridgeNotif.setOnCheckedChangeListener((b, c) -> prefs.setPhoneBridgeNotifEnabled(c));
@@ -474,6 +485,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void refreshUi() {
         updateHomeDashboard();
+        updateAfterHoursSummaryLabel();
         loadAppRulesAsync();
         loadSenderRulesAsync();
         loadVaultHistoryAsync();
@@ -583,9 +595,100 @@ public class MainActivity extends AppCompatActivity {
             List<ChatMessageEntity> list;
             if (currentVaultFilter == 1) list = db.chatMessageDao().getDeletedVaultSync();
             else if (currentVaultFilter == 2) list = db.chatMessageDao().getCoalescedSync();
+            else if (currentVaultFilter == 3) list = db.chatMessageDao().getAfterHoursSync();
             else list = db.chatMessageDao().getRecentAllSync();
             runOnUiThread(() -> vaultAdapter.submitList(list));
         });
+    }
+
+    private void updateAfterHoursSummaryLabel() {
+        String startStr = String.format(Locale.US, "%02d:%02d",
+                prefs.getAfterHoursStartHour(), prefs.getAfterHoursStartMin());
+        String endStr = String.format(Locale.US, "%02d:%02d",
+                prefs.getAfterHoursEndHour(), prefs.getAfterHoursEndMin());
+        String daysStr = getString(prefs.isAfterHoursWeekdaysOnly()
+                ? R.string.after_hours_days_weekdays
+                : R.string.after_hours_days_daily);
+        int appCount = prefs.getAfterHoursMutedPackages().size();
+        swAutoAfterHours.setText(getString(
+                R.string.setting_auto_after_hours_fmt,
+                daysStr, startStr, endStr, appCount
+        ));
+    }
+
+    private void showConfigureAfterHoursDialog() {
+        db.executor().execute(() -> {
+            db.ensureDefaultsSync();
+            List<AppRuleEntity> apps = db.appRuleDao().getAllSync();
+            runOnUiThread(() -> openAfterHoursDialogWithApps(apps));
+        });
+    }
+
+    private void openAfterHoursDialogWithApps(List<AppRuleEntity> apps) {
+        View v = LayoutInflater.from(this).inflate(R.layout.dialog_after_hours_config, null);
+        Button btnStart = v.findViewById(R.id.btn_ah_start_time);
+        Button btnEnd = v.findViewById(R.id.btn_ah_end_time);
+        CheckBox cbWeekdays = v.findViewById(R.id.cb_ah_weekdays_only);
+        LinearLayout llApps = v.findViewById(R.id.ll_ah_apps_list);
+
+        final int[] startHm = new int[]{prefs.getAfterHoursStartHour(), prefs.getAfterHoursStartMin()};
+        final int[] endHm = new int[]{prefs.getAfterHoursEndHour(), prefs.getAfterHoursEndMin()};
+        Runnable refreshTimeBtns = () -> {
+            btnStart.setText(getString(R.string.dlg_ah_start_btn_fmt,
+                    String.format(Locale.US, "%02d:%02d", startHm[0], startHm[1])));
+            btnEnd.setText(getString(R.string.dlg_ah_end_btn_fmt,
+                    String.format(Locale.US, "%02d:%02d", endHm[0], endHm[1])));
+        };
+        refreshTimeBtns.run();
+
+        btnStart.setOnClickListener(view -> new TimePickerDialog(this, (picker, h, m) -> {
+            startHm[0] = h;
+            startHm[1] = m;
+            refreshTimeBtns.run();
+        }, startHm[0], startHm[1], true).show());
+
+        btnEnd.setOnClickListener(view -> new TimePickerDialog(this, (picker, h, m) -> {
+            endHm[0] = h;
+            endHm[1] = m;
+            refreshTimeBtns.run();
+        }, endHm[0], endHm[1], true).show());
+
+        cbWeekdays.setChecked(prefs.isAfterHoursWeekdaysOnly());
+
+        Set<String> currentMuted = prefs.getAfterHoursMutedPackages();
+        List<CheckBox> appCheckBoxes = new ArrayList<>();
+        for (AppRuleEntity app : apps) {
+            CheckBox cb = new CheckBox(this);
+            cb.setText(app.appName);
+            cb.setTag(app.packageName);
+            cb.setChecked(currentMuted.contains(app.packageName));
+            llApps.addView(cb);
+            appCheckBoxes.add(cb);
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.dlg_after_hours_title)
+                .setView(v)
+                .setPositiveButton(R.string.btn_save, (d, w) -> {
+                    prefs.setAfterHoursStart(startHm[0], startHm[1]);
+                    prefs.setAfterHoursEnd(endHm[0], endHm[1]);
+                    prefs.setAfterHoursWeekdaysOnly(cbWeekdays.isChecked());
+
+                    Set<String> selected = new HashSet<>();
+                    for (CheckBox cb : appCheckBoxes) {
+                        if (cb.isChecked() && cb.getTag() instanceof String) {
+                            selected.add((String) cb.getTag());
+                        }
+                    }
+                    prefs.setAfterHoursMutedPackages(selected);
+
+                    ScheduleAndTimerReceiver.evaluateNowAndReschedule(this, prefs);
+                    WearDataLayerManager.syncStateAsync(this);
+                    refreshUi();
+                    Toast.makeText(this, R.string.toast_saved, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(R.string.btn_cancel, null)
+                .show();
     }
 
     private void showEditAppRuleDialog(AppRuleEntity rule) {

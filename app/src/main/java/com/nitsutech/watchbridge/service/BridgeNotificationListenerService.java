@@ -108,7 +108,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         long now = System.currentTimeMillis();
         RuleEvaluator.Decision decision = RuleEvaluator.evaluate(this, parsed, appRule, senderRules, prefs, now);
 
-        if (!decision.shouldBridge && !decision.coalescedByCooldown) {
+        if (!decision.shouldBridge && !decision.coalescedByCooldown && !decision.suppressedAfterHours) {
             return;
         }
 
@@ -127,13 +127,19 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         entity.canMarkRead = parsed.canMarkRead;
         entity.isDeletedBySender = false;
         entity.isRead = false;
-        entity.isDismissed = false;
+        entity.isDismissed = decision.suppressedAfterHours;
         entity.wasCoalesced = decision.coalescedByCooldown;
+        entity.isAfterHoursMuted = decision.suppressedAfterHours;
         entity.mediaPath = parsed.mediaPath;
         entity.mediaBase64 = parsed.mediaBase64;
         entity.hasVoiceNote = parsed.hasVoiceNote;
         entity.voiceNoteUri = parsed.voiceNoteUri;
         db.chatMessageDao().insert(entity);
+
+        if (decision.suppressedAfterHours) {
+            sendBroadcast(new Intent(PersistentRepeatForegroundService.ACTION_STATE_BROADCAST).setPackage(getPackageName()));
+            return;
+        }
 
         if (prefs.isRepeatMode()) {
             if (decision.coalescedByCooldown) {

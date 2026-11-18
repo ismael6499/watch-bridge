@@ -631,6 +631,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/filter_coalesced" />
+
+                    <com.google.android.material.chip.Chip
+                        android:id="@+id/chip_vault_after_hours"
+                        style="@style/Widget.MaterialComponents.Chip.Choice"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/filter_after_hours" />
                 </com.google.android.material.chip.ChipGroup>
 
                 <Button
@@ -684,6 +691,16 @@
                     android:layout_height="wrap_content"
                     android:text="@string/setting_auto_after_hours"
                     android:textColor="@color/text_primary" />
+
+                <Button
+                    android:id="@+id/btn_config_after_hours"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
+                    android:text="@string/btn_config_after_hours"
+                    android:textColor="@color/brand_primary"
+                    android:textSize="12sp" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/sw_phone_bridge_notif"

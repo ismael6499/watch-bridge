@@ -35,6 +35,9 @@ public class ChatMessageEntity {
     // Coalesced by Cooling Time
     public boolean wasCoalesced = false;
 
+    // Silenced during After-Hours (stored in app Vault/history without alerting watch)
+    public boolean isAfterHoursMuted = false;
+
     // Cached image/sticker path (FileProvider) & compact Base64 thumbnail for Watch
     public String mediaPath = "";
     public String mediaBase64 = "";

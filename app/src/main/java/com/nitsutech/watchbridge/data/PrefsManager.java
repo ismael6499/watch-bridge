@@ -11,8 +11,10 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PrefsManager {
 
@@ -36,6 +38,7 @@ public class PrefsManager {
     private static final String KEY_AFTER_HOURS_END_HOUR = "after_hours_end_hour";
     private static final String KEY_AFTER_HOURS_END_MIN = "after_hours_end_min";
     private static final String KEY_AFTER_HOURS_WEEKDAYS_ONLY = "after_hours_weekdays_only";
+    private static final String KEY_AFTER_HOURS_MUTED_APPS = "after_hours_muted_apps_json";
     private static final String KEY_URGENT_KEYWORDS = "urgent_keywords";
     private static final String KEY_TEAMS_REPLIES = "teams_quick_replies";
     private static final String KEY_WA_REPLIES = "wa_quick_replies";
@@ -190,6 +193,31 @@ public class PrefsManager {
 
     public void setAfterHoursWeekdaysOnly(boolean weekdaysOnly) {
         prefs.edit().putBoolean(KEY_AFTER_HOURS_WEEKDAYS_ONLY, weekdaysOnly).apply();
+    }
+
+    public Set<String> getAfterHoursMutedPackages() {
+        if (!prefs.contains(KEY_AFTER_HOURS_MUTED_APPS)) {
+            Set<String> def = new HashSet<>();
+            def.add(AppDatabase.PKG_TEAMS);
+            return def;
+        }
+        String json = prefs.getString(KEY_AFTER_HOURS_MUTED_APPS, "[]");
+        try {
+            Type type = new TypeToken<HashSet<String>>() {}.getType();
+            Set<String> set = gson.fromJson(json, type);
+            return set != null ? set : new HashSet<>();
+        } catch (Exception e) {
+            return new HashSet<>();
+        }
+    }
+
+    public void setAfterHoursMutedPackages(Set<String> packages) {
+        Set<String> clean = packages != null ? packages : new HashSet<>();
+        prefs.edit().putString(KEY_AFTER_HOURS_MUTED_APPS, gson.toJson(clean)).apply();
+    }
+
+    public boolean isPackageMutedInAfterHours(String packageName) {
+        return packageName != null && getAfterHoursMutedPackages().contains(packageName);
     }
 
     public String getUrgentKeywordsRaw() {

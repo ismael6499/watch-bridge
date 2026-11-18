@@ -14,7 +14,7 @@ public class BootCompletedReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         PrefsManager prefs = new PrefsManager(context);
-        ScheduleAndTimerReceiver.scheduleAutoAfterHoursAlarms(context, prefs);
+        ScheduleAndTimerReceiver.evaluateNowAndReschedule(context, prefs);
         if (prefs.isRepeatMode()) {
             long end = prefs.getRepeatEndTimeMs();
             if (end > 0 && System.currentTimeMillis() >= end) {

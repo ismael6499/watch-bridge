@@ -58,6 +58,8 @@ public class VaultHistoryAdapter extends RecyclerView.Adapter<VaultHistoryAdapte
         badge.append(m.senderName).append(" • ").append(timeStr);
         if (m.isDeletedBySender) {
             badge.append(" • 🗑️ ").append(ctx.getString(R.string.deleted_tag));
+        } else if (m.isAfterHoursMuted) {
+            badge.append(" • 🌙 ").append(ctx.getString(R.string.after_hours_tag));
         } else if (m.wasCoalesced) {
             badge.append(" • ❄️ ").append(ctx.getString(R.string.coalesced_tag));
         }
