@@ -80,22 +80,29 @@ public class WearDataLayerManager {
         }
     }
 
+    public static void syncAndSendAlertBlocking(Context context, WearProtocol.AlertTickPayload tick) {
+        syncStateBlocking(context);
+        sendAlertTickBlocking(context, tick);
+    }
+
+    public static void sendAlertTickBlocking(Context context, WearProtocol.AlertTickPayload tick) {
+        try {
+            byte[] bytes = GSON.toJson(tick).getBytes(StandardCharsets.UTF_8);
+            List<Node> nodes = Tasks.await(Wearable.getNodeClient(context).getConnectedNodes());
+            if (nodes != null && !nodes.isEmpty()) {
+                lastConnectedWatchName = nodes.get(0).getDisplayName();
+                for (Node node : nodes) {
+                    Tasks.await(Wearable.getMessageClient(context)
+                            .sendMessage(node.getId(), WearProtocol.PATH_ALERT_MSG, bytes));
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     public static void sendAlertTickAsync(Context context, WearProtocol.AlertTickPayload tick) {
         final Context appCtx = context.getApplicationContext();
-        IO_EXEC.execute(() -> {
-            try {
-                byte[] bytes = GSON.toJson(tick).getBytes(StandardCharsets.UTF_8);
-                List<Node> nodes = Tasks.await(Wearable.getNodeClient(appCtx).getConnectedNodes());
-                if (nodes != null && !nodes.isEmpty()) {
-                    lastConnectedWatchName = nodes.get(0).getDisplayName();
-                    for (Node node : nodes) {
-                        Tasks.await(Wearable.getMessageClient(appCtx)
-                                .sendMessage(node.getId(), WearProtocol.PATH_ALERT_MSG, bytes));
-                    }
-                }
-            } catch (Exception ignored) {
-            }
-        });
+        IO_EXEC.execute(() -> sendAlertTickBlocking(appCtx, tick));
     }
 
     public static void sendVoiceNoteToWatchAsync(Context context, long messageId, String conversationKey) {
@@ -235,14 +242,22 @@ public class WearDataLayerManager {
                 grouped.put(m.conversationKey, conv);
             }
             if (conv.messages.size() < 10) {
-                conv.messages.add(0, toMessageDto(m));
+                WearProtocol.MessageDto dto = toMessageDto(m);
+                if (!conv.messages.isEmpty()) {
+                    dto.mediaBase64 = "";
+                }
+                conv.messages.add(0, dto);
             }
         }
         state.conversations = new ArrayList<>(grouped.values());
 
         List<ChatMessageEntity> vault = db.chatMessageDao().getDeletedVaultSync();
         for (int i = 0; i < Math.min(vault.size(), 25); i++) {
-            state.deletedVault.add(toMessageDto(vault.get(i)));
+            WearProtocol.MessageDto dto = toMessageDto(vault.get(i));
+            if (i >= 3) {
+                dto.mediaBase64 = "";
+            }
+            state.deletedVault.add(dto);
         }
 
         return state;

@@ -82,8 +82,10 @@ public class WatchWearListenerService extends WearableListenerService {
         if (WearProtocol.PATH_SYNC_MSG.equals(path)) {
             prefs.saveStateJson(raw);
             WearProtocol.WatchStatePayload state = prefs.getState();
+            WatchNotifHelper.reconcileWithState(this, state);
             if (state.activeAlertCount == 0) {
-                WatchNotifHelper.cancelAll(this);
+                NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+                if (nm != null) nm.cancel(8801);
             }
             refreshWatchSurfaces();
             sendBroadcast(new Intent(ACTION_WATCH_STATE_UPDATED).setPackage(getPackageName()));

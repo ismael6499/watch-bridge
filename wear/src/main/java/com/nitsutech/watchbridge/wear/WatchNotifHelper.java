@@ -42,18 +42,15 @@ public class WatchNotifHelper {
         ensureChannels(context, nm);
 
         Integer prevId = ACTIVE_IDS.get(tick.conversationKey);
-        int notifId;
-        if (tick.attemptCount > 1 && prevId != null) {
+        if (prevId != null) {
             nm.cancel(prevId);
             try {
-                Thread.sleep(280L);
+                Thread.sleep(180L);
             } catch (InterruptedException ignored) {
                 Thread.currentThread().interrupt();
             }
-            notifId = NEXT_ID.incrementAndGet();
-        } else {
-            notifId = prevId != null ? prevId : NEXT_ID.incrementAndGet();
         }
+        int notifId = NEXT_ID.incrementAndGet();
         ACTIVE_IDS.put(tick.conversationKey, notifId);
 
         String channelId = tick.isRepeating ? CHANNEL_WATCH_REPEAT : CHANNEL_WATCH_NORMAL;
@@ -70,19 +67,21 @@ public class WatchNotifHelper {
             }
 
             boolean addedHistory = false;
+            String lastAddedText = "";
             if (state != null && state.conversations != null) {
                 for (WearProtocol.ConversationDto c : state.conversations) {
                     if (tick.conversationKey.equals(c.conversationKey) && c.messages != null && !c.messages.isEmpty()) {
                         for (WearProtocol.MessageDto m : c.messages) {
                             Person p = m.isOutgoing ? me : new Person.Builder().setName(m.senderName).build();
                             msgStyle.addMessage(m.messageText, m.timestamp, p);
+                            lastAddedText = m.messageText != null ? m.messageText : "";
                         }
                         addedHistory = true;
                         break;
                     }
                 }
             }
-            if (!addedHistory) {
+            if (!addedHistory || (!TextUtils.isEmpty(tick.messageText) && !tick.messageText.equals(lastAddedText))) {
                 Person p = new Person.Builder().setName(tick.senderName).build();
                 msgStyle.addMessage(tick.messageText, System.currentTimeMillis(), p);
             }
@@ -206,6 +205,26 @@ public class WatchNotifHelper {
         }
 
         nm.notify(notifId, builder.build());
+    }
+
+    public static void reconcileWithState(Context context, WearProtocol.WatchStatePayload state) {
+        if (state == null || state.conversations == null) return;
+        java.util.Set<String> activeKeys = new java.util.HashSet<>();
+        for (WearProtocol.ConversationDto c : state.conversations) {
+            if (c != null && c.conversationKey != null) {
+                activeKeys.add(c.conversationKey);
+            }
+        }
+        NotificationManager nm = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        for (java.util.Iterator<java.util.Map.Entry<String, Integer>> it = ACTIVE_IDS.entrySet().iterator(); it.hasNext(); ) {
+            java.util.Map.Entry<String, Integer> entry = it.next();
+            if (!activeKeys.contains(entry.getKey())) {
+                if (nm != null && entry.getValue() != null) {
+                    nm.cancel(entry.getValue());
+                }
+                it.remove();
+            }
+        }
     }
 
     public static void cancelForChat(Context context, String conversationKey) {

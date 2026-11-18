@@ -234,8 +234,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
             tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(parsed.packageName));
         }
 
-        WearDataLayerManager.syncStateBlocking(this);
-        WearDataLayerManager.sendAlertTickAsync(this, tick);
+        WearDataLayerManager.syncAndSendAlertBlocking(this, tick);
 
         if (decision.shouldRepeat) {
             PersistentRepeatForegroundService.enqueueRepeat(
