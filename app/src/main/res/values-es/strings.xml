@@ -62,6 +62,7 @@
     <string name="btn_stop_all">Detener Todo</string>
     <string name="btn_sync_watch">Sincronizar Reloj</string>
     <string name="btn_test_watch_alert">Probar Alerta y Escalado en Reloj</string>
+    <string name="btn_test_watch_call">Probar Llamada Entrante en Reloj</string>
 
     <!-- Permissions -->
     <string name="section_permissions">Permisos y Configuración</string>
@@ -221,6 +222,7 @@
     <string name="toast_sync_sent">Estado sincronizado con tu Galaxy Watch</string>
     <string name="toast_alerts_stopped">Todas las alertas detenidas</string>
     <string name="toast_test_alert_sent">Alerta de prueba iniciada (repite cada 10s hasta descartar)</string>
+    <string name="toast_test_call_sent">Llamada de prueba enviada al Galaxy Watch</string>
     <string name="toast_saved">Configuración guardada</string>
     <string name="toast_no_recent_contacts">Todavía no hay notificaciones recientes capturadas</string>
 </resources>

@@ -359,6 +359,11 @@ public class MainActivity extends AppCompatActivity {
             ProfileController.triggerTestAlert(this);
             Toast.makeText(this, R.string.toast_test_alert_sent, Toast.LENGTH_SHORT).show();
         });
+
+        findViewById(R.id.btn_test_watch_call).setOnClickListener(v -> {
+            ProfileController.triggerTestCall(this);
+            Toast.makeText(this, R.string.toast_test_call_sent, Toast.LENGTH_SHORT).show();
+        });
     }
 
     private void setupTab2Listeners() {

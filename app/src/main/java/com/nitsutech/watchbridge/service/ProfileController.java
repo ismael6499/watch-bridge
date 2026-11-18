@@ -416,4 +416,23 @@ public class ProfileController {
             );
         });
     }
+
+    public static void triggerTestCall(Context context) {
+        com.nitsutech.watchbridge.wear.WearProtocol.AlertTickPayload tick =
+                new com.nitsutech.watchbridge.wear.WearProtocol.AlertTickPayload();
+        tick.conversationKey = "test|" + AppDatabase.PKG_WHATSAPP + "|test-call";
+        tick.packageName = AppDatabase.PKG_WHATSAPP;
+        tick.appLabel = "WhatsApp";
+        tick.conversationTitle = "Test Call (WhatsApp)";
+        tick.senderName = "Test Call (WhatsApp)";
+        tick.messageText = "Incoming call";
+        tick.attemptCount = 1;
+        tick.hapticPattern = 3;
+        tick.escalationLevel = 3;
+        tick.notificationKind = com.nitsutech.watchbridge.wear.WearProtocol.KIND_CALL;
+        tick.isCall = true;
+        tick.canAnswerCall = true;
+        tick.canDeclineCall = true;
+        WearDataLayerManager.sendAlertTickAsync(context, tick);
+    }
 }
