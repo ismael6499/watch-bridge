@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="14dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <EditText
+            android:id="@+id/et_dlg_sender_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_sender_or_group"
+            android:inputType="text" />
+
+        <Spinner
+            android:id="@+id/sp_dlg_sender_app"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" />
+
+        <Spinner
+            android:id="@+id/sp_dlg_sender_chat_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" />
+
+        <Spinner
+            android:id="@+id/sp_dlg_sender_action"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp" />
+
+        <EditText
+            android:id="@+id/et_dlg_sender_repeat_sec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_repeat_sec"
+            android:inputType="number" />
+
+        <EditText
+            android:id="@+id/et_dlg_sender_cooldown_sec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_cooldown_sec"
+            android:inputType="number" />
+
+        <CheckBox
+            android:id="@+id/cb_dlg_sender_vip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dlg_vip_checkbox" />
+
+        <CheckBox
+            android:id="@+id/cb_dlg_sender_alarm"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/dlg_alarm_override" />
+    </LinearLayout>
+</ScrollView>

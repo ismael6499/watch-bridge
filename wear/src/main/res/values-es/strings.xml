@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WatchBridge</string>
+    <string name="watch_escalation_channel">Escalado Despertador en Reloj</string>
+    <string name="wear_channel_normal">Mensajes Recibidos</string>
+    <string name="wear_channel_repeat">Alertas Repetitivas</string>
+    <string name="wear_me_label">Yo</string>
+    <string name="wear_notif_reply">Responder</string>
+    <string name="wear_notif_stop">Detener alerta</string>
+    <string name="tile_label">Controles WatchBridge</string>
+    <string name="complication_label">Modo WatchBridge</string>
+
+    <string name="tile_header_repeat">🔁 PERSISTENTE ON</string>
+    <string name="tile_repeat_on">🔁 PERSIST. ON</string>
+    <string name="tile_repeat_off">🔔 PERSIST. OFF</string>
+    <string name="tile_stop">🛑 PARAR</string>
+    <string name="tile_teams_on">🟣 Teams ON</string>
+    <string name="tile_teams_off">🟣 Teams OFF</string>
+    <string name="tile_wa_on">🟢 WA ON</string>
+    <string name="tile_wa_off">🟢 WA OFF</string>
+    <string name="tile_open_app">Abrir App</string>
+
+    <string name="comp_repeat">🔁 PER</string>
+    <string name="comp_normal">🔔 ON</string>
+    <string name="comp_work">💻 TRAB</string>
+    <string name="comp_after_hours">🌙 POST</string>
+
+    <string name="wear_profile_normal">🔔 Proxy Normal</string>
+    <string name="wear_profile_repeat">🔁 Persistente ON</string>
+    <string name="wear_profile_work">💻 Modo Trabajo</string>
+    <string name="wear_profile_after_hours">🌙 Post-Trabajo</string>
+    <string name="wear_alerts_zero">Alertas: 0</string>
+    <string name="wear_alerts_count_fmt">Repitiendo: %1$d</string>
+
+    <string name="wear_btn_back">← Volver</string>
+    <string name="wear_btn_repeat">🔁 Modo Persistente</string>
+    <string name="wear_btn_normal">🔔 Normal</string>
+    <string name="wear_btn_work">💻 Trabajo</string>
+    <string name="wear_btn_after">🌙 Post-Trabajo</string>
+    <string name="wear_btn_stop_all">🛑 Parar Alertas</string>
+    <string name="wear_btn_chats">💬 Chats (Fantasma)</string>
+    <string name="wear_btn_apps">📱 Apps Celular ON/OFF</string>
+    <string name="wear_btn_vault">🗑️ Bóveda Borrados</string>
+    <string name="wear_btn_remote">🔋 Control Celular</string>
+    <string name="wear_btn_sync">🔄 Sincronizar</string>
+
+    <string name="wear_empty_chats">Todavía no hay chats activos</string>
+    <string name="wear_empty_apps">Tocá Sincronizar para cargar apps</string>
+    <string name="wear_empty_vault">Sin mensajes borrados capturados</string>
+    <string name="wear_deleted_tag">Eliminado</string>
+    <string name="wear_btn_x">✖</string>
+    <string name="wear_btn_play_voice">🔊 Oír Audio en Reloj</string>
+    <string name="wear_speed_default">Velocidad: 1.0x</string>
+    <string name="wear_speed_fmt">Velocidad: %.1fx</string>
+    <string name="wear_btn_tts">🗣️ Leer en Voz Alta</string>
+    <string name="wear_btn_reply">🎤 Responder</string>
+    <string name="wear_btn_send">Enviar</string>
+    <string name="wear_btn_cancel">Cancelar</string>
+    <string name="wear_btn_mark_read">✔ Marcar Leído</string>
+    <string name="wear_btn_snooze">⏰ Posponer 3m</string>
+    <string name="wear_btn_mute_1h">🔕 Silenciar 1h</string>
+    <string name="wear_btn_vip">⭐ Alternar VIP</string>
+    <string name="wear_btn_dismiss">✖ Descartar Chat</string>
+    <string name="wear_btn_clear_all">🗑️ Vaciar Todo</string>
+
+    <string name="wear_app_on">App: ON</string>
+    <string name="wear_app_off">App: OFF</string>
+    <string name="wear_groups_on">Grupos: ON</string>
+    <string name="wear_groups_off">Grupos: OFF</string>
+    <string name="wear_timers_fmt">Rep %1$ds | Cool %2$ds</string>
+
+    <string name="wear_phone_battery_unknown">Batería Celular: --%</string>
+    <string name="wear_phone_battery_fmt">Batería Celular: %1$d%%</string>
+    <string name="wear_remote_sound">🔊 Sonido</string>
+    <string name="wear_remote_vibrate">📳 Vibrar</string>
+    <string name="wear_remote_silent">🔕 Silencio</string>
+    <string name="wear_remote_ring">📢 Sonar Celular</string>
+    <string name="wear_remote_stop_ring">🛑 Parar Timbre</string>
+
+    <string name="wear_toast_reply_sent">Respuesta enviada</string>
+    <string name="wear_toast_stopped">Alertas detenidas</string>
+    <string name="wear_toast_syncing">Sincronizando…</string>
+    <string name="wear_toast_loading_audio">Buscando nota de voz…</string>
+    <string name="wear_toast_marked_read">Marcado como leído</string>
+    <string name="wear_toast_snoozed">Pospuesto 3 min</string>
+    <string name="wear_toast_muted_1h">Chat silenciado 1h</string>
+    <string name="wear_toast_ringing_phone">Haciendo sonar celular…</string>
+</resources>

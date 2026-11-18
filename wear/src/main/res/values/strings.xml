@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WatchBridge</string>
+    <string name="watch_escalation_channel">Watch Wake-Up Escalation</string>
+    <string name="wear_channel_normal">Bridged Messages</string>
+    <string name="wear_channel_repeat">Repeating Alerts</string>
+    <string name="wear_me_label">Me</string>
+    <string name="wear_notif_reply">Reply</string>
+    <string name="wear_notif_stop">Stop Alert</string>
+    <string name="tile_label">WatchBridge Controls</string>
+    <string name="complication_label">WatchBridge Mode</string>
+
+    <string name="tile_header_repeat">🔁 REPEAT ACTIVE</string>
+    <string name="tile_repeat_on">🔁 REPEAT ON</string>
+    <string name="tile_repeat_off">🔔 REPEAT OFF</string>
+    <string name="tile_stop">🛑 STOP</string>
+    <string name="tile_teams_on">🟣 Teams ON</string>
+    <string name="tile_teams_off">🟣 Teams OFF</string>
+    <string name="tile_wa_on">🟢 WA ON</string>
+    <string name="tile_wa_off">🟢 WA OFF</string>
+    <string name="tile_open_app">Open Hub</string>
+
+    <string name="comp_repeat">🔁 RPT</string>
+    <string name="comp_normal">🔔 ON</string>
+    <string name="comp_work">💻 WRK</string>
+    <string name="comp_after_hours">🌙 AH</string>
+
+    <string name="wear_profile_normal">🔔 Normal Proxy</string>
+    <string name="wear_profile_repeat">🔁 Repeat Mode ON</string>
+    <string name="wear_profile_work">💻 Work Focus</string>
+    <string name="wear_profile_after_hours">🌙 After-Hours</string>
+    <string name="wear_alerts_zero">Alerts: 0</string>
+    <string name="wear_alerts_count_fmt">Repeating: %1$d</string>
+
+    <string name="wear_btn_back">← Back</string>
+    <string name="wear_btn_repeat">🔁 Repeat Mode</string>
+    <string name="wear_btn_normal">🔔 Normal</string>
+    <string name="wear_btn_work">💻 Work</string>
+    <string name="wear_btn_after">🌙 After-Hours</string>
+    <string name="wear_btn_stop_all">🛑 Stop All Alerts</string>
+    <string name="wear_btn_chats">💬 Chats (Ghost)</string>
+    <string name="wear_btn_apps">📱 Phone Apps ON/OFF</string>
+    <string name="wear_btn_vault">🗑️ Deleted Vault</string>
+    <string name="wear_btn_remote">🔋 Phone Remote</string>
+    <string name="wear_btn_sync">🔄 Sync Phone</string>
+
+    <string name="wear_empty_chats">No active messages synced yet</string>
+    <string name="wear_empty_apps">Tap Sync Phone to load apps</string>
+    <string name="wear_empty_vault">No deleted messages captured</string>
+    <string name="wear_deleted_tag">Deleted</string>
+    <string name="wear_btn_x">✖</string>
+    <string name="wear_btn_play_voice">🔊 Play Voice on Watch</string>
+    <string name="wear_speed_default">Speed: 1.0x</string>
+    <string name="wear_speed_fmt">Speed: %.1fx</string>
+    <string name="wear_btn_tts">🗣️ Read Aloud (TTS)</string>
+    <string name="wear_btn_reply">🎤 Reply</string>
+    <string name="wear_btn_send">Send</string>
+    <string name="wear_btn_cancel">Cancel</string>
+    <string name="wear_btn_mark_read">✔ Mark Read</string>
+    <string name="wear_btn_snooze">⏰ Snooze 3m</string>
+    <string name="wear_btn_mute_1h">🔕 Mute 1h</string>
+    <string name="wear_btn_vip">⭐ VIP Toggle</string>
+    <string name="wear_btn_dismiss">✖ Dismiss Chat</string>
+    <string name="wear_btn_clear_all">🗑️ Clear All</string>
+
+    <string name="wear_app_on">App: ON</string>
+    <string name="wear_app_off">App: OFF</string>
+    <string name="wear_groups_on">Groups: ON</string>
+    <string name="wear_groups_off">Groups: OFF</string>
+    <string name="wear_timers_fmt">Rep %1$ds | Cool %2$ds</string>
+
+    <string name="wear_phone_battery_unknown">Phone Battery: --%</string>
+    <string name="wear_phone_battery_fmt">Phone Battery: %1$d%%</string>
+    <string name="wear_remote_sound">🔊 Sound</string>
+    <string name="wear_remote_vibrate">📳 Vibrate</string>
+    <string name="wear_remote_silent">🔕 Silent</string>
+    <string name="wear_remote_ring">📢 Ring My Phone</string>
+    <string name="wear_remote_stop_ring">🛑 Stop Ring</string>
+
+    <string name="wear_toast_reply_sent">Reply sent to phone</string>
+    <string name="wear_toast_stopped">Alerts stopped</string>
+    <string name="wear_toast_syncing">Sync requested…</string>
+    <string name="wear_toast_loading_audio">Fetching voice note…</string>
+    <string name="wear_toast_marked_read">Marked read</string>
+    <string name="wear_toast_snoozed">Snoozed 3 min</string>
+    <string name="wear_toast_muted_1h">Chat muted 1 hour</string>
+    <string name="wear_toast_ringing_phone">Ringing phone…</string>
+</resources>

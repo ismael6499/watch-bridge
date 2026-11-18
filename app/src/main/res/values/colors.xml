@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand_primary">#4527A0</color>
+    <color name="brand_primary_dark">#1A103D</color>
+    <color name="brand_accent">#00B8D4</color>
+    <color name="brand_accent_text">#4527A0</color>
+    <color name="bg_surface">#F4F6FA</color>
+    <color name="card_bg">#FFFFFF</color>
+    <color name="text_primary">#111827</color>
+    <color name="text_secondary">#4B5563</color>
+    <color name="nav_bg">#FFFFFF</color>
+    <color name="nav_item_active">#4527A0</color>
+    <color name="nav_item_inactive">#6B7280</color>
+    <color name="btn_mode_bg">#E8EAF6</color>
+    <color name="btn_mode_text">#1A103D</color>
+    <color name="briefing_bg">#EDE7F6</color>
+    <color name="briefing_text">#1A103D</color>
+    <color name="repeat_gold">#FFB300</color>
+    <color name="danger_red">#D32F2F</color>
+    <color name="ok_green">#2E7D32</color>
+</resources>

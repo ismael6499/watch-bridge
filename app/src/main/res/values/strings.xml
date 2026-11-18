@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">WatchBridge</string>
+
+    <!-- Notification Channels & Foreground -->
+    <string name="channel_proxy_normal_name">Bridged Chats</string>
+    <string name="channel_proxy_normal_desc">Normal proxy messages forwarded to your Galaxy Watch</string>
+    <string name="channel_proxy_silent_name">Silent / Muted Chats</string>
+    <string name="channel_proxy_silent_desc">Chats muted in WhatsApp/Teams forwarded silently without watch vibration</string>
+    <string name="channel_proxy_repeat_name">Persistent Repeating Alerts</string>
+    <string name="channel_proxy_repeat_desc">Repeating watch and phone alerts during Repeat Mode</string>
+    <string name="channel_proxy_urgent_name">Escalated Priority Alerts</string>
+    <string name="channel_proxy_urgent_desc">Progressive escalation and VIP / Call alerts</string>
+    <string name="channel_service_name">WatchBridge Service</string>
+    <string name="channel_service_desc">Persistent status while Repeat Mode or repeating alerts run</string>
+    <string name="fg_repeat_active_title">WatchBridge • Repeat Mode Active</string>
+    <string name="fg_alert_active_title">WatchBridge • Repeating Alert Active</string>
+    <string name="fg_status_body">Active repeating chats: %1$d</string>
+
+    <!-- Notification Actions & Labels -->
+    <string name="me_label">Me</string>
+    <string name="deleted_tag">Deleted by sender</string>
+    <string name="coalesced_tag">Burst absorbed</string>
+    <string name="action_reply">Reply</string>
+    <string name="action_mark_read">Mark Read</string>
+    <string name="action_snooze_3m">Snooze 3m</string>
+    <string name="action_stop_alert">Stop Alert</string>
+    <string name="action_end_repeat">End Repeat</string>
+    <string name="test_alert_message_body">Persistent alert test ping from WatchBridge! Reply, Snooze 3m, or Dismiss on your Galaxy Watch.</string>
+
+    <!-- Bottom Nav -->
+    <string name="nav_home">Hub</string>
+    <string name="nav_apps">Apps</string>
+    <string name="nav_rules">Rules</string>
+    <string name="nav_vault">Vault</string>
+
+    <!-- Dashboard / Home -->
+    <string name="watch_checking">Checking Galaxy Watch connection…</string>
+    <string name="watch_connected_fmt">Connected Watch: %1$s</string>
+    <string name="watch_disconnected">Watch not connected (open WatchBridge on Galaxy Watch 8 Classic)</string>
+    <string name="section_active_mode">ACTIVE BRIDGE PROFILE</string>
+    <string name="profile_normal_badge">🔔 Normal Proxy (24/7)</string>
+    <string name="profile_repeat_badge">🔁 Repeat Mode Active</string>
+    <string name="profile_work_badge">💻 Work Focus</string>
+    <string name="profile_after_hours_badge">🌙 After-Hours (Teams Muted)</string>
+    <string name="status_repeat_timed">🔁 Repeat Mode • %1$d min left</string>
+    <string name="status_repeat_manual">🔁 Repeat Mode • Manual</string>
+    <string name="btn_mode_normal">🔔 Normal</string>
+    <string name="btn_mode_repeat">🔁 Repeat Mode</string>
+    <string name="btn_mode_work">💻 Work</string>
+    <string name="btn_mode_after_hours">🌙 After-Hours</string>
+    <string name="label_repeat_duration">Repeat Mode Auto-Off Timer:</string>
+    <string name="repeat_dur_manual">Manual</string>
+    <string name="repeat_dur_30">30m</string>
+    <string name="repeat_dur_45">45m</string>
+    <string name="repeat_dur_60">60m</string>
+    <string name="repeat_dur_90">90m</string>
+    <string name="repeat_briefing_fmt">Last Session Summary: %1$d alerts delivered • %2$d message bursts absorbed by Cooling Time</string>
+    <string name="active_alerts_zero">Active Repeating Alerts: 0</string>
+    <string name="active_alerts_fmt">Active Repeating Alerts: %1$d</string>
+    <string name="btn_stop_all">Stop All</string>
+    <string name="btn_sync_watch">Sync Watch</string>
+    <string name="btn_test_watch_alert">Test Watch Alert &amp; Escalation</string>
+
+    <!-- Permissions -->
+    <string name="section_permissions">Setup &amp; Permissions</string>
+    <string name="perm_ok">Granted</string>
+    <string name="perm_missing">Missing</string>
+    <string name="perm_optional">Optional</string>
+    <string name="perm_row_fmt">%1$s: %2$s</string>
+    <string name="perm_name_listener">Notification Access</string>
+    <string name="perm_name_post">Post Notifications</string>
+    <string name="perm_name_dnd">Silent / DND Control</string>
+    <string name="perm_name_battery">Battery Unrestricted</string>
+    <string name="perm_name_voice">WA Voice Folder</string>
+    <string name="btn_perm_listener">Notif Access</string>
+    <string name="btn_perm_post">Post Notifs</string>
+    <string name="btn_perm_dnd">DND Access</string>
+    <string name="btn_perm_battery">Unrestricted</string>
+    <string name="btn_perm_voice_folder">WA Audio Dir</string>
+
+    <!-- Find My Phone -->
+    <string name="find_phone_icon">📢</string>
+    <string name="find_phone_title">Find My Phone Ringing</string>
+    <string name="find_phone_subtitle">Triggered from your Galaxy Watch 8 Classic</string>
+    <string name="find_phone_stop_btn">🛑 STOP RING</string>
+    <string name="galaxy_wearable_hint">Tip: In Galaxy Wearable -> Watch Settings -> Notifications, enable ONLY WatchBridge and disable direct WhatsApp/Teams toggles to avoid duplicate buzzes.</string>
+
+    <!-- Apps Tab -->
+    <string name="btn_add_app">+ Add Installed App</string>
+    <string name="btn_edit_app_timers">Edit 1-on-1 / Group / Cooling Timers</string>
+    <string name="state_on">ON</string>
+    <string name="state_off">OFF</string>
+    <string name="once_label">Once</string>
+    <string name="app_rule_direct_summary">1-on-1: %1$s • Repeat: %2$s • Cooling: %3$ds</string>
+    <string name="app_rule_group_summary">Groups: %1$s • Repeat: %2$s • Cooling: %3$ds</string>
+    <string name="dlg_direct_section">Direct Messages (1-on-1)</string>
+    <string name="dlg_group_section">Group Chats / Channels</string>
+    <string name="dlg_enable_direct">Bridge 1-on-1 chats</string>
+    <string name="dlg_enable_group">Bridge group chats</string>
+    <string name="dlg_repeat_persistent">Repeat in Persistent Mode</string>
+    <string name="hint_repeat_sec">Repeat every (seconds)</string>
+    <string name="hint_cooldown_sec">Burst Cooling Time (sec, 0 = off)</string>
+    <string name="dlg_sound_mode">Phone Audio Mode</string>
+    <string name="sound_mode_watch_only">Watch Only (No phone sound)</string>
+    <string name="sound_mode_watch_and_phone">Watch + Phone Notification</string>
+    <string name="sound_mode_loud_alarm">Watch + Loud Phone Alarm</string>
+    <string name="dlg_haptic_pattern">Watch Haptic Pattern</string>
+    <string name="haptic_teams_double">Teams Double Pulse</string>
+    <string name="haptic_wa_long_short">WhatsApp Long-Short</string>
+    <string name="haptic_group_short">Group Short Tap</string>
+    <string name="haptic_urgent_wake">Urgent Wake-Up Rhythm</string>
+
+    <!-- Sender Rules & Keywords Tab -->
+    <string name="btn_new_sender_rule">+ New Sender/Chat Rule</string>
+    <string name="btn_pick_recent">Pick Recent</string>
+    <string name="scope_all_apps">All Apps</string>
+    <string name="chat_type_both">Direct &amp; Group</string>
+    <string name="chat_type_direct">1-on-1 Only</string>
+    <string name="chat_type_group">Group Only</string>
+    <string name="rule_action_repeat_fmt">Repeat %1$ds</string>
+    <string name="rule_action_once">Notify Once</string>
+    <string name="rule_action_mute">Mute</string>
+    <string name="cooling_fmt">Cool %1$ds</string>
+    <string name="dlg_new_sender_rule">New Sender / Chat Rule</string>
+    <string name="dlg_edit_sender_rule">Edit Sender / Chat Rule</string>
+    <string name="hint_sender_or_group">Sender or Group name</string>
+    <string name="rule_mode_repeat">Repeat Alert</string>
+    <string name="rule_mode_once">Notify Once (No Repeat)</string>
+    <string name="rule_mode_mute">Mute / Ignore</string>
+    <string name="dlg_vip_checkbox">⭐ VIP Contact (Ignore Mutes &amp; Cooldown)</string>
+    <string name="dlg_alarm_override">Force Loud Phone Alarm</string>
+    <string name="label_urgent_keywords">Urgent Keywords (comma separated)</string>
+    <string name="hint_urgent_keywords">urgent, deploy, call me…</string>
+    <string name="label_teams_replies">Teams Quick Replies (| separated)</string>
+    <string name="label_wa_replies">WhatsApp Quick Replies (| separated)</string>
+    <string name="hint_pipe_replies">Reply 1|Reply 2|Reply 3</string>
+    <string name="btn_preset_replies_es">Spanish Presets</string>
+    <string name="btn_preset_replies_en">English Presets</string>
+    <string name="cd_delete">Delete</string>
+
+    <!-- Vault & Settings Tab -->
+    <string name="filter_all">All</string>
+    <string name="filter_deleted">🗑️ Deleted Vault</string>
+    <string name="filter_coalesced">❄️ Burst Absorbed</string>
+    <string name="btn_clear_all">Clear Filtered Items</string>
+    <string name="setting_progressive_escalation">Progressive Wake-Up Escalation (Attempt 3+ boosts alarm &amp; watch)</string>
+    <string name="setting_phone_in_use">Smart Suppression when phone is unlocked in hand (Normal mode)</string>
+    <string name="setting_auto_tts">Auto Read Aloud (TTS) on Watch Speaker at Attempt 3+</string>
+    <string name="setting_call_boost">Call Boost (4s urgent repeat on WhatsApp/Teams calls in Repeat Mode)</string>
+    <string name="setting_auto_after_hours">Auto After-Hours Schedule (Mon-Fri 18:00 - 09:00)</string>
+    <string name="setting_phone_bridge_notif">Also show WatchBridge notifications in Phone bar (legacy Galaxy Wearable)</string>
+    <string name="label_max_repeat">Max Repeat Duration Cap</string>
+    <string name="max_repeat_3m">3 minutes</string>
+    <string name="max_repeat_5m">5 minutes</string>
+    <string name="max_repeat_10m">10 minutes</string>
+    <string name="max_repeat_unlimited">Unlimited</string>
+    <string name="btn_export_rules">Export Rules JSON</string>
+
+    <!-- Widgets -->
+    <string name="widget_compact_name">WatchBridge Repeat 1x1</string>
+    <string name="widget_control_name">WatchBridge Control Bar</string>
+    <string name="widget_icon_default">🔔</string>
+    <string name="widget_repeat_on">REPEAT ON</string>
+    <string name="widget_repeat_off">REPEAT OFF</string>
+    <string name="widget_status_repeat_timer">%1$dm left • %2$d active</string>
+    <string name="widget_status_alerts">Active alerts: %1$d</string>
+    <string name="widget_btn_repeat">Repeat</string>
+    <string name="widget_btn_mode">Mode</string>
+    <string name="widget_btn_stop">Stop</string>
+
+    <!-- Dialogs & Toasts -->
+    <string name="btn_save">Save</string>
+    <string name="btn_cancel">Cancel</string>
+    <string name="btn_ok">OK</string>
+    <string name="toast_sync_sent">Synced state to Galaxy Watch</string>
+    <string name="toast_alerts_stopped">All repeating alerts stopped</string>
+    <string name="toast_test_alert_sent">Test alert started (repeats every 10s until dismissed)</string>
+    <string name="toast_saved">Settings saved</string>
+    <string name="toast_no_recent_contacts">No recent notifications captured yet</string>
+</resources>
