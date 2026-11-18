@@ -56,6 +56,7 @@ public class PrefsManager {
     private static final String KEY_SYNC_PHONE_DISMISS = "sync_phone_dismiss";
     private static final String KEY_ESCALATION_ATTEMPT = "escalation_attempt_threshold";
     private static final String KEY_DEFAULT_SNOOZE_MIN = "default_snooze_minutes";
+    private static final String KEY_WATCH_TTS_LANG = "watch_tts_language";
 
     private static final String DEFAULT_KEYWORDS = "urgent, urgente, deploy, produccion, producción, caido, caído, llamame, call me";
     public static final String DEFAULT_TEAMS_REPLIES_ES = "Ahí lo reviso|Dame 10 minutos|Estoy en reunión, ya te respondo|Ok, gracias";
@@ -210,6 +211,14 @@ public class PrefsManager {
 
     public void setDefaultSnoozeMinutes(int minutes) {
         prefs.edit().putInt(KEY_DEFAULT_SNOOZE_MIN, Math.max(1, minutes)).apply();
+    }
+
+    public String getWatchTtsLanguage() {
+        return prefs.getString(KEY_WATCH_TTS_LANG, "es");
+    }
+
+    public void setWatchTtsLanguage(String lang) {
+        prefs.edit().putString(KEY_WATCH_TTS_LANG, lang == null ? "es" : lang).apply();
     }
 
     public boolean isAutoAfterHoursEnabled() {

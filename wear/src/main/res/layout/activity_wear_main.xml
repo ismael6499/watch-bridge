@@ -246,6 +246,55 @@
                     android:textColor="#FFFFFF"
                     android:textSize="11sp" />
 
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <Button
+                        android:id="@+id/btn_wear_vol_down"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="#1E293B"
+                        android:text="@string/wear_btn_vol_down"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/btn_wear_vol_up"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_marginStart="3dp"
+                        android:layout_marginEnd="3dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="#1E293B"
+                        android:text="@string/wear_btn_vol_up"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp" />
+
+                    <Button
+                        android:id="@+id/btn_wear_stop_audio"
+                        android:layout_width="0dp"
+                        android:layout_height="38dp"
+                        android:layout_weight="1"
+                        android:backgroundTint="#7F1D1D"
+                        android:text="@string/wear_btn_stop_audio"
+                        android:textColor="#FFFFFF"
+                        android:textSize="11sp" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tv_wear_vol_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:paddingBottom="4dp"
+                    android:text="@string/wear_vol_default"
+                    android:textColor="#90CAF9"
+                    android:textSize="10sp" />
+
                 <Button
                     android:id="@+id/btn_wear_reply_voice"
                     android:layout_width="match_parent"

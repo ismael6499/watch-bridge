@@ -781,6 +781,19 @@
                     android:id="@+id/sp_snooze_minutes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/label_watch_tts_lang"
+                    android:textColor="@color/text_primary" />
+
+                <Spinner
+                    android:id="@+id/sp_watch_tts_lang"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
                     android:layout_marginBottom="10dp" />
 
                 <LinearLayout

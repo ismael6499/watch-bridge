@@ -187,6 +187,14 @@
     <string name="snooze_5m">5 minutes</string>
     <string name="snooze_10m">10 minutes</string>
     <string name="snooze_15m">15 minutes</string>
+    <string name="label_watch_tts_lang">Watch Voice Readout (TTS) Language</string>
+    <string name="tts_lang_es">Spanish (Default)</string>
+    <string name="tts_lang_en">English</string>
+    <string name="tts_lang_auto">Device Default</string>
+    <string name="dlg_wa_audio_access_title">WhatsApp Audio Access</string>
+    <string name="dlg_wa_audio_access_msg">To play WhatsApp voice notes on your Galaxy Watch speaker, grant All Files Access (fastest auto-detection) or pick the WhatsApp Voice Notes folder manually.</string>
+    <string name="dlg_wa_grant_all_files">All Files Access (Recommended)</string>
+    <string name="dlg_wa_pick_folder">Pick Folder Manually</string>
     <string name="btn_export_rules">Export Rules JSON</string>
     <string name="btn_import_rules">Import Rules JSON</string>
     <string name="btn_copy">Copy</string>

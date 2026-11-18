@@ -107,7 +107,7 @@ public class WatchWearListenerService extends WearableListenerService {
                 if (header != null) {
                     prefs.setLastFallbackTts(header.fallbackTtsText);
                     if (!header.isAudioAvailable && header.fallbackTtsText != null && !header.fallbackTtsText.isEmpty()) {
-                        WatchAudioHelper.speakTts(this, header.fallbackTtsText);
+                        WatchAudioHelper.speakTts(this, header.fallbackTtsText, prefs.getState().ttsLanguage);
                     }
                 }
             } catch (Exception ignored) {
@@ -145,7 +145,8 @@ public class WatchWearListenerService extends WearableListenerService {
         WatchNotifHelper.postWatchNotification(this, tick, state);
 
         if (tick.autoTts && tick.senderName != null && tick.messageText != null) {
-            WatchAudioHelper.speakTts(this, tick.appLabel + ", " + tick.senderName + ": " + tick.messageText);
+            WatchAudioHelper.speakTts(this, tick.appLabel + ", " + tick.senderName + ": " + tick.messageText,
+                    state != null ? state.ttsLanguage : "es");
         }
 
         // Idea #8 Progressive Wake-Up Escalation at Attempt 3+

@@ -2,6 +2,7 @@ package com.nitsutech.watchbridge.wear;
 
 import android.content.Context;
 import android.media.AudioAttributes;
+import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.PlaybackParams;
 import android.media.Ringtone;
@@ -37,14 +38,19 @@ public class WatchAudioHelper {
                     .build());
             mediaPlayer.setDataSource(file.getAbsolutePath());
             mediaPlayer.prepare();
-            PlaybackParams params = mediaPlayer.getPlaybackParams();
-            params.setSpeed(speed);
-            mediaPlayer.setPlaybackParams(params);
             mediaPlayer.setOnCompletionListener(mp -> {
                 stopPlayback();
                 if (onComplete != null) HANDLER.post(onComplete);
             });
             mediaPlayer.start();
+            if (Math.abs(speed - 1.0f) > 0.05f) {
+                try {
+                    PlaybackParams params = mediaPlayer.getPlaybackParams();
+                    params.setSpeed(speed);
+                    mediaPlayer.setPlaybackParams(params);
+                } catch (Exception ignored) {
+                }
+            }
         } catch (Exception e) {
             stopPlayback();
             if (onComplete != null) HANDLER.post(onComplete);
@@ -82,22 +88,85 @@ public class WatchAudioHelper {
         mediaPlayer = null;
     }
 
+    public static void stopTts() {
+        try {
+            if (tts != null) tts.stop();
+        } catch (Exception ignored) {
+        }
+    }
+
+    public static void stopAllAudio() {
+        stopPlayback();
+        stopTts();
+    }
+
+    public static int getMediaVolumePct(Context context) {
+        try {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return 50;
+            int max = Math.max(1, am.getStreamMaxVolume(AudioManager.STREAM_MUSIC));
+            int cur = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+            return Math.round((cur * 100f) / max);
+        } catch (Exception e) {
+            return 50;
+        }
+    }
+
+    public static int adjustMediaVolume(Context context, int delta) {
+        try {
+            AudioManager am = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
+            if (am == null) return 50;
+            int dir = delta > 0 ? AudioManager.ADJUST_RAISE : AudioManager.ADJUST_LOWER;
+            am.adjustStreamVolume(AudioManager.STREAM_MUSIC, dir, AudioManager.FLAG_SHOW_UI);
+            return getMediaVolumePct(context);
+        } catch (Exception e) {
+            return getMediaVolumePct(context);
+        }
+    }
+
     public static void speakTts(Context context, String text) {
+        speakTts(context, text, "es");
+    }
+
+    public static void speakTts(Context context, String text, String langCode) {
         if (text == null || text.trim().isEmpty()) return;
+        Locale target = resolveTtsLocale(langCode);
         if (tts != null && ttsReady) {
+            applyTtsSettings(tts, target);
             tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wb_tts");
             return;
         }
         tts = new TextToSpeech(context.getApplicationContext(), status -> {
             if (status == TextToSpeech.SUCCESS) {
                 ttsReady = true;
-                int res = tts.setLanguage(Locale.getDefault());
-                if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    tts.setLanguage(Locale.US);
-                }
+                applyTtsSettings(tts, target);
                 tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "wb_tts");
             }
         });
+    }
+
+    private static Locale resolveTtsLocale(String langCode) {
+        if ("en".equals(langCode)) return Locale.US;
+        if ("auto".equals(langCode)) return Locale.getDefault();
+        return new Locale("es", "AR");
+    }
+
+    private static void applyTtsSettings(TextToSpeech engine, Locale preferred) {
+        try {
+            engine.setAudioAttributes(new AudioAttributes.Builder()
+                    .setUsage(AudioAttributes.USAGE_MEDIA)
+                    .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH)
+                    .build());
+            int res = engine.setLanguage(preferred);
+            if ((res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED)
+                    && "es".equals(preferred.getLanguage())) {
+                res = engine.setLanguage(new Locale("es"));
+            }
+            if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
+                engine.setLanguage(Locale.getDefault());
+            }
+        } catch (Exception ignored) {
+        }
     }
 
     public static void playEscalationChime(Context context) {

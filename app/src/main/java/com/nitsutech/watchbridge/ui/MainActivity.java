@@ -15,7 +15,9 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.PowerManager;
+import android.provider.DocumentsContract;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -126,6 +128,7 @@ public class MainActivity extends AppCompatActivity {
     private Spinner spMaxRepeatMinutes;
     private Spinner spEscalationAttempt;
     private Spinner spSnoozeMinutes;
+    private Spinner spWatchTtsLang;
 
     private final ActivityResultLauncher<String> notifPermLauncher =
             registerForActivityResult(new ActivityResultContracts.RequestPermission(), granted -> refreshUi());
@@ -235,6 +238,7 @@ public class MainActivity extends AppCompatActivity {
         spMaxRepeatMinutes = findViewById(R.id.sp_max_repeat_minutes);
         spEscalationAttempt = findViewById(R.id.sp_escalation_attempt);
         spSnoozeMinutes = findViewById(R.id.sp_snooze_minutes);
+        spWatchTtsLang = findViewById(R.id.sp_watch_tts_lang);
     }
 
     private void setupNavigationAndBackStack() {
@@ -333,7 +337,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.btn_grant_voice_folder).setOnClickListener(v -> voiceTreeLauncher.launch(null));
+        findViewById(R.id.btn_grant_voice_folder).setOnClickListener(v -> showVoiceAccessPicker());
 
         findViewById(R.id.btn_stop_all_alerts).setOnClickListener(v -> {
             PersistentRepeatForegroundService.stopAllSessions(this);
@@ -582,6 +586,30 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        final String[] ttsLangValues = new String[]{"es", "en", "auto"};
+        String[] ttsLangOpts = new String[]{
+                getString(R.string.tts_lang_es),
+                getString(R.string.tts_lang_en),
+                getString(R.string.tts_lang_auto)
+        };
+        spWatchTtsLang.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, ttsLangOpts));
+        String curTts = prefs.getWatchTtsLanguage();
+        int ttsIdx = "en".equals(curTts) ? 1 : ("auto".equals(curTts) ? 2 : 0);
+        spWatchTtsLang.setSelection(ttsIdx);
+        spWatchTtsLang.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
+                if (!ttsLangValues[pos].equals(prefs.getWatchTtsLanguage())) {
+                    prefs.setWatchTtsLanguage(ttsLangValues[pos]);
+                    WearDataLayerManager.syncStateAsync(MainActivity.this);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+
         findViewById(R.id.btn_export_rules_json).setOnClickListener(v -> showExportJsonDialog());
         findViewById(R.id.btn_import_rules_json).setOnClickListener(v -> showImportJsonDialog());
     }
@@ -662,7 +690,7 @@ public class MainActivity extends AppCompatActivity {
                 getString(R.string.perm_name_battery),
                 batteryOk ? getString(R.string.perm_ok) : getString(R.string.perm_missing)));
 
-        boolean voiceOk = !TextUtils.isEmpty(prefs.getVoiceNotesTreeUri());
+        boolean voiceOk = com.nitsutech.watchbridge.engine.NotificationParser.hasVoiceFolderAccess(this, prefs);
         tvPermVoiceFolderStatus.setText(getString(R.string.perm_row_fmt,
                 getString(R.string.perm_name_voice),
                 voiceOk ? getString(R.string.perm_ok) : getString(R.string.perm_optional)));
@@ -702,6 +730,44 @@ public class MainActivity extends AppCompatActivity {
             else list = db.chatMessageDao().getRecentAllSync();
             runOnUiThread(() -> vaultAdapter.submitList(list));
         });
+    }
+
+    private void showVoiceAccessPicker() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.dlg_wa_audio_access_title)
+                .setMessage(R.string.dlg_wa_audio_access_msg)
+                .setPositiveButton(R.string.dlg_wa_grant_all_files, (d, w) -> {
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+                        try {
+                            Intent i = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                            i.setData(Uri.parse("package:" + getPackageName()));
+                            startActivity(i);
+                            return;
+                        } catch (Exception ignored) {
+                        }
+                        try {
+                            startActivity(new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION));
+                            return;
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    launchVoiceTreeWithHint();
+                })
+                .setNeutralButton(R.string.dlg_wa_pick_folder, (d, w) -> launchVoiceTreeWithHint())
+                .setNegativeButton(R.string.btn_cancel, null)
+                .show();
+    }
+
+    private void launchVoiceTreeWithHint() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            try {
+                Uri hint = Uri.parse("content://com.android.externalstorage.documents/document/primary%3AAndroid%2Fmedia%2Fcom.whatsapp%2FWhatsApp%2FMedia%2FWhatsApp%20Voice%20Notes");
+                voiceTreeLauncher.launch(hint);
+                return;
+            } catch (Exception ignored) {
+            }
+        }
+        voiceTreeLauncher.launch(null);
     }
 
     private void updateAfterHoursSummaryLabel() {

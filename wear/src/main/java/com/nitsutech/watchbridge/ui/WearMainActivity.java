@@ -84,6 +84,7 @@ public class WearMainActivity extends AppCompatActivity {
     private LinearLayout llQuickReplies;
     private TextView tvChatHeader;
     private Button btnAudioSpeed;
+    private TextView tvWearVolStatus;
     private LinearLayout llAppsList;
     private LinearLayout llVaultList;
     private TextView tvRemoteBattery;
@@ -116,6 +117,7 @@ public class WearMainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
         setContentView(R.layout.activity_wear_main);
 
         prefs = new WatchPrefsManager(this);
@@ -210,6 +212,7 @@ public class WearMainActivity extends AppCompatActivity {
         llQuickReplies = findViewById(R.id.ll_wear_quick_replies);
         tvChatHeader = findViewById(R.id.tv_wear_chat_header);
         btnAudioSpeed = findViewById(R.id.btn_wear_audio_speed);
+        tvWearVolStatus = findViewById(R.id.tv_wear_vol_status);
         llAppsList = findViewById(R.id.ll_wear_apps_list);
         llVaultList = findViewById(R.id.ll_wear_vault_list);
         tvRemoteBattery = findViewById(R.id.tv_wear_phone_battery);
@@ -322,6 +325,15 @@ public class WearMainActivity extends AppCompatActivity {
 
         // Chat Detail Actions
         findViewById(R.id.btn_wear_tts).setOnClickListener(v -> speakCurrentChat());
+        findViewById(R.id.btn_wear_vol_down).setOnClickListener(v -> {
+            int pct = WatchAudioHelper.adjustMediaVolume(this, -1);
+            tvWearVolStatus.setText(getString(R.string.wear_vol_fmt, pct));
+        });
+        findViewById(R.id.btn_wear_vol_up).setOnClickListener(v -> {
+            int pct = WatchAudioHelper.adjustMediaVolume(this, 1);
+            tvWearVolStatus.setText(getString(R.string.wear_vol_fmt, pct));
+        });
+        findViewById(R.id.btn_wear_stop_audio).setOnClickListener(v -> WatchAudioHelper.stopAllAudio());
         findViewById(R.id.btn_wear_play_voice).setOnClickListener(v -> {
             WearProtocol.ConversationDto conv = findConversation(currentChatKey);
             long msgId = (conv != null && !conv.messages.isEmpty())
@@ -471,6 +483,7 @@ public class WearMainActivity extends AppCompatActivity {
         String kindLabel = isChat ? "" : "📅 ";
         tvChatHeader.setText((conv.isVip ? "⭐ " : "") + kindLabel + conv.conversationTitle + " • " + conv.appLabel);
         updateSpeedButtonText();
+        tvWearVolStatus.setText(getString(R.string.wear_vol_fmt, WatchAudioHelper.getMediaVolumePct(this)));
 
         boolean anyVoiceNote = false;
         llChatMessages.removeAllViews();
@@ -662,7 +675,7 @@ public class WearMainActivity extends AppCompatActivity {
         for (WearProtocol.MessageDto m : conv.messages) {
             sb.append(m.senderName).append(": ").append(m.messageText).append(". ");
         }
-        WatchAudioHelper.speakTts(this, sb.toString());
+        WatchAudioHelper.speakTts(this, sb.toString(), state != null ? state.ttsLanguage : "es");
     }
 
     private void cycleAudioSpeed() {

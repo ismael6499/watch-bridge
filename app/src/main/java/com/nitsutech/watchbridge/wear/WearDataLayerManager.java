@@ -119,10 +119,12 @@ public class WearDataLayerManager {
 
                 WearProtocol.AudioTransferHeader header = new WearProtocol.AudioTransferHeader();
                 header.conversationKey = conversationKey;
-                byte[] audioBytes = null;
-
-                if (msg != null && !TextUtils.isEmpty(msg.voiceNoteUri)) {
-                    audioBytes = readLimitedBytes(appCtx, Uri.parse(msg.voiceNoteUri), 2_500_000);
+                PrefsManager prefs = new PrefsManager(appCtx);
+                String storedUri = msg != null ? msg.voiceNoteUri : "";
+                long msgTs = msg != null ? msg.timestamp : System.currentTimeMillis();
+                byte[] audioBytes = com.nitsutech.watchbridge.engine.NotificationParser
+                        .readVoiceNoteBytes(appCtx, storedUri, msgTs, prefs, 2_500_000);
+                if (msg != null) {
                     header.fileName = "voice_" + msg.id + ".ogg";
                 }
 
@@ -146,9 +148,11 @@ public class WearDataLayerManager {
                     }
                 } else {
                     header.isAudioAvailable = false;
-                    header.fallbackTtsText = msg != null
-                            ? (msg.senderName + ". " + msg.messageText)
-                            : "Voice note audio folder permission not configured on phone.";
+                    boolean hasPerm = com.nitsutech.watchbridge.engine.NotificationParser
+                            .hasVoiceFolderAccess(appCtx, prefs);
+                    header.fallbackTtsText = hasPerm
+                            ? "No se encontró el archivo de audio de WhatsApp."
+                            : "Falta habilitar permiso de archivos o carpeta de audios en WatchBridge del celular.";
                     byte[] headerJson = GSON.toJson(header).getBytes(StandardCharsets.UTF_8);
                     for (Node node : nodes) {
                         Tasks.await(Wearable.getMessageClient(appCtx)
@@ -195,6 +199,7 @@ public class WearDataLayerManager {
         state.phoneRingerMode = readRingerMode(context);
         state.activeAlertCount = PersistentRepeatForegroundService.getActiveSessionCount();
         state.isFindingPhone = com.nitsutech.watchbridge.service.AlertAudioHelper.isFindPhoneRinging();
+        state.ttsLanguage = prefs.getWatchTtsLanguage();
         state.syncedAtMs = System.currentTimeMillis();
 
         List<AppRuleEntity> rules = db.appRuleDao().getAllSync();

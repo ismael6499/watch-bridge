@@ -1,5 +1,6 @@
 package com.nitsutech.watchbridge.engine;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
@@ -17,6 +18,7 @@ import android.graphics.drawable.Icon;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Parcelable;
 import android.service.notification.NotificationListenerService;
 import android.service.notification.StatusBarNotification;
@@ -25,6 +27,7 @@ import android.util.Base64;
 
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
+import androidx.core.content.ContextCompat;
 import androidx.documentfile.provider.DocumentFile;
 
 import com.nitsutech.watchbridge.data.AppDatabase;
@@ -32,8 +35,12 @@ import com.nitsutech.watchbridge.data.PrefsManager;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
@@ -266,65 +273,201 @@ public class NotificationParser {
 
     private static boolean isVoiceNoteText(String text) {
         if (TextUtils.isEmpty(text)) return false;
-        String lower = text.toLowerCase(Locale.ROOT);
+        String lower = text.toLowerCase(Locale.ROOT).trim();
         return lower.contains("🎤")
+                || lower.contains("🎙")
                 || lower.contains("voice message")
                 || lower.contains("mensaje de voz")
-                || lower.contains("audio (0:")
-                || lower.contains("audio (1:")
+                || lower.contains("nota de voz")
+                || lower.matches(".*\\baudio\\s*\\(\\d+:\\d+\\).*")
                 || lower.startsWith("audio ")
-                || lower.contains("nota de voz");
+                || lower.matches("^\\d{1,2}:\\d{2}$");
     }
 
-    private static String findLatestVoiceNoteUri(Context context, PrefsManager prefs, long msgTimeMs) {
+    public static boolean hasVoiceFolderAccess(Context context, PrefsManager prefs) {
+        return canReadDirectStorage(context) || !TextUtils.isEmpty(prefs.getVoiceNotesTreeUri());
+    }
+
+    public static boolean canReadDirectStorage(Context context) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            return Environment.isExternalStorageManager();
+        }
+        return ContextCompat.checkSelfPermission(context, Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    public static byte[] readVoiceNoteBytes(Context context, String storedUri, long msgTimeMs,
+                                            PrefsManager prefs, int maxBytes) {
+        byte[] direct = readBytesFromAnyUri(context, storedUri, maxBytes);
+        if (direct != null && direct.length > 0) {
+            return direct;
+        }
+        String freshUri = findLatestVoiceNoteUri(context, prefs, msgTimeMs);
+        if (!TextUtils.isEmpty(freshUri) && !freshUri.equals(storedUri)) {
+            return readBytesFromAnyUri(context, freshUri, maxBytes);
+        }
+        return null;
+    }
+
+    private static byte[] readBytesFromAnyUri(Context context, String uriStr, int maxBytes) {
+        if (TextUtils.isEmpty(uriStr)) return null;
+        try {
+            if (uriStr.startsWith("/") || uriStr.startsWith("file://")) {
+                File f = new File(uriStr.startsWith("file://") ? Uri.parse(uriStr).getPath() : uriStr);
+                if (!f.exists() || !f.canRead()) return null;
+                try (InputStream is = new FileInputStream(f)) {
+                    return readStreamLimited(is, maxBytes);
+                }
+            }
+            try (InputStream is = context.getContentResolver().openInputStream(Uri.parse(uriStr))) {
+                return readStreamLimited(is, maxBytes);
+            }
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static byte[] readStreamLimited(InputStream is, int maxBytes) throws Exception {
+        if (is == null) return null;
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int total = 0;
+        int read;
+        while ((read = is.read(buf)) != -1) {
+            if (total + read > maxBytes) break;
+            baos.write(buf, 0, read);
+            total += read;
+        }
+        return baos.toByteArray();
+    }
+
+    public static String findLatestVoiceNoteUri(Context context, PrefsManager prefs, long msgTimeMs) {
+        if (canReadDirectStorage(context)) {
+            File bestFile = findLatestDirectWhatsAppAudio(msgTimeMs);
+            if (bestFile != null) {
+                return Uri.fromFile(bestFile).toString();
+            }
+        }
         String treeUriStr = prefs.getVoiceNotesTreeUri();
         if (TextUtils.isEmpty(treeUriStr)) return "";
         try {
             DocumentFile root = DocumentFile.fromTreeUri(context, Uri.parse(treeUriStr));
             if (root == null || !root.exists()) return "";
-            DocumentFile newest = scanNewestAudio(root, msgTimeMs);
+            DocumentFile newest = scanNewestAudio(root, msgTimeMs, 0);
             return newest != null ? newest.getUri().toString() : "";
         } catch (Exception e) {
             return "";
         }
     }
 
-    private static DocumentFile scanNewestAudio(DocumentFile dir, long targetTime) {
-        DocumentFile best = null;
-        long bestTime = 0L;
-        DocumentFile[] files = dir.listFiles();
-        if (files == null) return null;
-        // Look inside subfolders sorted by latest modified (WhatsApp groups voice notes in YYYYWW folders)
-        for (DocumentFile f : files) {
-            if (f.isDirectory()) {
-                String dirName = f.getName() == null ? "" : f.getName().toLowerCase(Locale.ROOT);
-                // Skip Sent (outgoing) folder so we never pick our own sent voice notes
-                if ("sent".equals(dirName)) {
-                    continue;
-                }
-                if ("private".equals(dirName)
-                        || f.lastModified() >= targetTime - 7 * 24 * 3600 * 1000L
-                        || f.lastModified() == 0) {
-                    DocumentFile sub = scanNewestAudio(f, targetTime);
-                    if (sub != null && (best == null
-                            || Math.abs(targetTime - sub.lastModified()) < Math.abs(targetTime - bestTime))) {
-                        best = sub;
-                        bestTime = sub.lastModified();
+    private static File findLatestDirectWhatsAppAudio(long targetTime) {
+        File ext = Environment.getExternalStorageDirectory();
+        if (ext == null) return null;
+        String[] relPaths = new String[]{
+                "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Voice Notes",
+                "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Audio",
+                "Android/media/com.whatsapp.w4b/WhatsApp Business/Media/WhatsApp Business Voice Notes",
+                "WhatsApp/Media/WhatsApp Voice Notes",
+                "WhatsApp/Media/WhatsApp Audio"
+        };
+        File best = null;
+        long bestDiff = Long.MAX_VALUE;
+        long maxAgeWindowMs = 15 * 60_000L;
+
+        for (String rel : relPaths) {
+            File dir = new File(ext, rel);
+            if (!dir.exists() || !dir.isDirectory()) continue;
+            File[] entries = dir.listFiles();
+            if (entries == null || entries.length == 0) continue;
+
+            List<File> subDirs = new ArrayList<>();
+            for (File f : entries) {
+                if (f.isDirectory()) {
+                    String dn = f.getName().toLowerCase(Locale.ROOT);
+                    if (!"sent".equals(dn) && !"private".equals(dn)) {
+                        subDirs.add(f);
+                    }
+                } else if (isSupportedAudioName(f.getName())) {
+                    long mod = f.lastModified();
+                    long diff = targetTime > 0 ? Math.abs(targetTime - mod) : Math.max(0L, System.currentTimeMillis() - mod);
+                    if (diff < maxAgeWindowMs && diff < bestDiff) {
+                        best = f;
+                        bestDiff = diff;
                     }
                 }
-            } else {
-                String name = f.getName() == null ? "" : f.getName().toLowerCase(Locale.ROOT);
-                if (name.endsWith(".opus") || name.endsWith(".ogg") || name.endsWith(".m4a") || name.endsWith(".aac") || name.endsWith(".mp3")) {
-                    long mod = f.lastModified();
-                    if (Math.abs(targetTime - mod) < 120_000L
-                            && (best == null || Math.abs(targetTime - mod) < Math.abs(targetTime - bestTime))) {
-                        best = f;
-                        bestTime = mod;
+            }
+            // Sort YYYYWW subfolders descending so current week is checked first!
+            Collections.sort(subDirs, (a, b) -> b.getName().compareToIgnoreCase(a.getName()));
+            int limit = Math.min(subDirs.size(), 5);
+            for (int i = 0; i < limit; i++) {
+                File[] children = subDirs.get(i).listFiles();
+                if (children == null) continue;
+                for (File f : children) {
+                    if (f.isFile() && isSupportedAudioName(f.getName())) {
+                        long mod = f.lastModified();
+                        long diff = targetTime > 0 ? Math.abs(targetTime - mod) : Math.max(0L, System.currentTimeMillis() - mod);
+                        if (diff < maxAgeWindowMs && diff < bestDiff) {
+                            best = f;
+                            bestDiff = diff;
+                        }
                     }
                 }
             }
         }
         return best;
+    }
+
+    private static DocumentFile scanNewestAudio(DocumentFile dir, long targetTime, int depth) {
+        if (depth > 2) return null;
+        DocumentFile best = null;
+        long bestDiff = Long.MAX_VALUE;
+        DocumentFile[] files = dir.listFiles();
+        if (files == null) return null;
+
+        List<DocumentFile> subDirs = new ArrayList<>();
+        long maxAgeWindowMs = 15 * 60_000L;
+        for (DocumentFile f : files) {
+            if (f.isDirectory()) {
+                String dirName = f.getName() == null ? "" : f.getName().toLowerCase(Locale.ROOT);
+                if (!"sent".equals(dirName) && !"private".equals(dirName)) {
+                    subDirs.add(f);
+                }
+            } else if (isSupportedAudioName(f.getName())) {
+                long mod = f.lastModified();
+                long diff = targetTime > 0 ? Math.abs(targetTime - mod) : Math.max(0L, System.currentTimeMillis() - mod);
+                if (diff < maxAgeWindowMs && diff < bestDiff) {
+                    best = f;
+                    bestDiff = diff;
+                }
+            }
+        }
+
+        // Check newest YYYYWW folders first so we don't scan 250 historical folders
+        Collections.sort(subDirs, (a, b) -> {
+            String na = a.getName() == null ? "" : a.getName();
+            String nb = b.getName() == null ? "" : b.getName();
+            return nb.compareToIgnoreCase(na);
+        });
+        int limit = Math.min(subDirs.size(), 6);
+        for (int i = 0; i < limit; i++) {
+            DocumentFile sub = scanNewestAudio(subDirs.get(i), targetTime, depth + 1);
+            if (sub != null) {
+                long mod = sub.lastModified();
+                long diff = targetTime > 0 ? Math.abs(targetTime - mod) : Math.max(0L, System.currentTimeMillis() - mod);
+                if (diff < bestDiff) {
+                    best = sub;
+                    bestDiff = diff;
+                }
+            }
+        }
+        return best;
+    }
+
+    private static boolean isSupportedAudioName(String name) {
+        if (name == null) return false;
+        String lower = name.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".opus") || lower.endsWith(".ogg") || lower.endsWith(".m4a")
+                || lower.endsWith(".aac") || lower.endsWith(".mp3");
     }
 
     private static void extractMediaFromUri(Context context, Uri uri, ParsedMessage parsed) {

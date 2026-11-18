@@ -53,6 +53,11 @@
     <string name="wear_speed_default">Speed: 1.0x</string>
     <string name="wear_speed_fmt">Speed: %.1fx</string>
     <string name="wear_btn_tts">🗣️ Read Aloud (TTS)</string>
+    <string name="wear_btn_vol_down">🔉 -</string>
+    <string name="wear_btn_vol_up">🔊 +</string>
+    <string name="wear_btn_stop_audio">⏹️</string>
+    <string name="wear_vol_default">Vol: 50%</string>
+    <string name="wear_vol_fmt">Vol: %1$d%%</string>
     <string name="wear_btn_reply">🎤 Reply</string>
     <string name="wear_btn_send">Send</string>
     <string name="wear_btn_cancel">Cancel</string>

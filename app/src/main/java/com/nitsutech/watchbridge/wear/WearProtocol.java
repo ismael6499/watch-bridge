@@ -47,6 +47,7 @@ public class WearProtocol {
         public int phoneRingerMode; // AudioManager.RINGER_MODE_*
         public int activeAlertCount;
         public boolean isFindingPhone;
+        public String ttsLanguage = "es";
         public long syncedAtMs;
         public List<AppRuleDto> appRules = new ArrayList<>();
         public List<ConversationDto> conversations = new ArrayList<>();
