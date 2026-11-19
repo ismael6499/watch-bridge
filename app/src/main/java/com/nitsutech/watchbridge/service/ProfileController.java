@@ -543,7 +543,7 @@ public class ProfileController {
                         context, convKey, parsed.packageName, parsed.appLabel,
                         parsed.conversationTitle, parsed.senderName, parsed.messageText,
                         false, false, decision.repeatIntervalSec,
-                        decision.phoneSoundMode, decision.hapticPattern, false, "", true
+                        decision.phoneSoundMode, decision.hapticPattern, false, ""
                 );
                 resultMsg = context.getString(R.string.toast_test_normal_repeat_fmt, decision.repeatIntervalSec);
             } else {

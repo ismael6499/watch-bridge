@@ -29,7 +29,7 @@
     <string name="action_end_repeat">Apagar Repetir</string>
     <string name="test_alert_message_body">¡Prueba de alerta de WatchBridge! Probá responder, posponer 3m o descartar desde tu Galaxy Watch.</string>
     <string name="test_normal_sender_name">Chat Prueba Teams</string>
-    <string name="test_normal_message_body">Mensaje normal de prueba de Teams (sigue el modo actual sin autoescalamiento).</string>
+    <string name="test_normal_message_body">Mensaje normal de prueba de Teams (sigue el modo y escalado reales).</string>
 
     <!-- Bottom Nav -->
     <string name="nav_home">Inicio</string>
@@ -64,7 +64,7 @@
     <string name="btn_stop_all">Detener Todo</string>
     <string name="btn_sync_watch">Sincronizar Reloj</string>
     <string name="btn_test_watch_alert">Probar Alerta y Escalado en Reloj</string>
-    <string name="btn_test_normal_message">Probar Mensaje Normal Teams (Sin Escalación)</string>
+    <string name="btn_test_normal_message">Probar Mensaje Normal Teams (Según Modo)</string>
     <string name="btn_test_watch_call">Probar Llamada Entrante en Reloj</string>
     <string name="btn_test_replay_active">Reenviar Notificaciones Visibles al Reloj</string>
 
@@ -256,7 +256,7 @@
     <string name="toast_alerts_stopped">Todas las alertas detenidas</string>
     <string name="toast_test_alert_sent">Alerta de prueba iniciada (repite cada 10s hasta descartar)</string>
     <string name="toast_test_normal_once">Test Teams enviado 1 vez (sin repetir ni escalar)</string>
-    <string name="toast_test_normal_repeat_fmt">Test Teams repitiendo cada %1$ds (sin escalación)</string>
+    <string name="toast_test_normal_repeat_fmt">Test Teams repitiendo cada %1$ds (según ajuste de escalado)</string>
     <string name="toast_test_normal_silent">Test Teams enviado en silencio al Reloj (regla activa)</string>
     <string name="toast_test_normal_blocked">Test Teams bloqueado por regla o Post-Trabajo</string>
     <string name="toast_test_call_sent">Llamada de prueba enviada al Galaxy Watch</string>
