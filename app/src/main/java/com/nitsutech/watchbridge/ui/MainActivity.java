@@ -537,7 +537,7 @@ public class MainActivity extends AppCompatActivity {
                 getString(R.string.max_repeat_15m),
                 getString(R.string.max_repeat_unlimited)
         };
-        spMaxRepeatMinutes.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, maxOpts));
+        bindSpinner(spMaxRepeatMinutes, maxOpts);
         int maxMin = prefs.getMaxRepeatMinutes();
         int maxIdx = 3; // default 5m
         for (int i = 0; i < maxValues.length; i++) {
@@ -565,7 +565,7 @@ public class MainActivity extends AppCompatActivity {
                 getString(R.string.esc_attempt_4),
                 getString(R.string.esc_attempt_5)
         };
-        spEscalationAttempt.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, escOpts));
+        bindSpinner(spEscalationAttempt, escOpts);
         int escVal = prefs.getEscalationAttemptThreshold();
         int escIdx = 1;
         for (int i = 0; i < escValues.length; i++) {
@@ -594,7 +594,7 @@ public class MainActivity extends AppCompatActivity {
                 getString(R.string.snooze_10m),
                 getString(R.string.snooze_15m)
         };
-        spSnoozeMinutes.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, snoozeOpts));
+        bindSpinner(spSnoozeMinutes, snoozeOpts);
         int snoozeVal = prefs.getDefaultSnoozeMinutes();
         int snoozeIdx = 1;
         for (int i = 0; i < snoozeValues.length; i++) {
@@ -621,7 +621,7 @@ public class MainActivity extends AppCompatActivity {
                 getString(R.string.tts_lang_en),
                 getString(R.string.tts_lang_auto)
         };
-        spWatchTtsLang.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, ttsLangOpts));
+        bindSpinner(spWatchTtsLang, ttsLangOpts);
         String curTts = prefs.getWatchTtsLanguage();
         int ttsIdx = "en".equals(curTts) ? 1 : ("auto".equals(curTts) ? 2 : 0);
         spWatchTtsLang.setSelection(ttsIdx);
@@ -761,8 +761,26 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private Context dialogContext() {
+        return new android.view.ContextThemeWrapper(this, R.style.ThemeOverlay_WatchBridge_Dialog);
+    }
+
+    private AlertDialog.Builder newAlertDialogBuilder() {
+        return new AlertDialog.Builder(dialogContext());
+    }
+
+    private void showTimePicker(int h, int m, TimePickerDialog.OnTimeSetListener listener) {
+        new TimePickerDialog(this, R.style.ThemeOverlay_WatchBridge_TimePicker, listener, h, m, true).show();
+    }
+
+    private void bindSpinner(Spinner sp, String[] items) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(dialogContext(), R.layout.item_spinner_text, items);
+        adapter.setDropDownViewResource(R.layout.item_spinner_dropdown);
+        sp.setAdapter(adapter);
+    }
+
     private void showVoiceAccessPicker() {
-        new AlertDialog.Builder(this)
+        newAlertDialogBuilder()
                 .setTitle(R.string.dlg_wa_audio_access_title)
                 .setMessage(R.string.dlg_wa_audio_access_msg)
                 .setPositiveButton(R.string.dlg_wa_grant_all_files, (d, w) -> {
@@ -823,7 +841,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void openAfterHoursDialogWithApps(List<AppRuleEntity> apps) {
-        View v = LayoutInflater.from(this).inflate(R.layout.dialog_after_hours_config, null);
+        View v = LayoutInflater.from(dialogContext()).inflate(R.layout.dialog_after_hours_config, null);
         Button btnStart = v.findViewById(R.id.btn_ah_start_time);
         Button btnEnd = v.findViewById(R.id.btn_ah_end_time);
         CheckBox cbWeekdays = v.findViewById(R.id.cb_ah_weekdays_only);
@@ -839,32 +857,33 @@ public class MainActivity extends AppCompatActivity {
         };
         refreshTimeBtns.run();
 
-        btnStart.setOnClickListener(view -> new TimePickerDialog(this, (picker, h, m) -> {
+        btnStart.setOnClickListener(view -> showTimePicker(startHm[0], startHm[1], (picker, h, m) -> {
             startHm[0] = h;
             startHm[1] = m;
             refreshTimeBtns.run();
-        }, startHm[0], startHm[1], true).show());
+        }));
 
-        btnEnd.setOnClickListener(view -> new TimePickerDialog(this, (picker, h, m) -> {
+        btnEnd.setOnClickListener(view -> showTimePicker(endHm[0], endHm[1], (picker, h, m) -> {
             endHm[0] = h;
             endHm[1] = m;
             refreshTimeBtns.run();
-        }, endHm[0], endHm[1], true).show());
+        }));
 
         cbWeekdays.setChecked(prefs.isAfterHoursWeekdaysOnly());
 
         Set<String> currentMuted = prefs.getAfterHoursMutedPackages();
         List<CheckBox> appCheckBoxes = new ArrayList<>();
         for (AppRuleEntity app : apps) {
-            CheckBox cb = new CheckBox(this);
+            CheckBox cb = new CheckBox(dialogContext());
             cb.setText(app.appName);
+            cb.setTextColor(getColor(R.color.text_primary));
             cb.setTag(app.packageName);
             cb.setChecked(currentMuted.contains(app.packageName));
             llApps.addView(cb);
             appCheckBoxes.add(cb);
         }
 
-        new AlertDialog.Builder(this)
+        newAlertDialogBuilder()
                 .setTitle(R.string.dlg_after_hours_title)
                 .setView(v)
                 .setPositiveButton(R.string.btn_save, (d, w) -> {
@@ -960,17 +979,17 @@ public class MainActivity extends AppCompatActivity {
         };
         refreshTimes.run();
 
-        btnStart.setOnClickListener(v -> new TimePickerDialog(this, (picker, h, m) -> {
+        btnStart.setOnClickListener(v -> showTimePicker(helper.startHour, helper.startMin, (picker, h, m) -> {
             helper.startHour = h;
             helper.startMin = m;
             refreshTimes.run();
-        }, helper.startHour, helper.startMin, true).show());
+        }));
 
-        btnEnd.setOnClickListener(v -> new TimePickerDialog(this, (picker, h, m) -> {
+        btnEnd.setOnClickListener(v -> showTimePicker(helper.endHour, helper.endMin, (picker, h, m) -> {
             helper.endHour = h;
             helper.endMin = m;
             refreshTimes.run();
-        }, helper.endHour, helper.endMin, true).show());
+        }));
 
         String[] opts = isSenderRule
                 ? new String[]{
@@ -984,7 +1003,7 @@ public class MainActivity extends AppCompatActivity {
                         getString(R.string.silent_mode_all_day),
                         getString(R.string.silent_mode_schedule)
                 };
-        helper.spMode.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, opts));
+        bindSpinner(helper.spMode, opts);
         int safeMode = Math.min(opts.length - 1, Math.max(0, mode));
         helper.spMode.setSelection(safeMode);
         schedBox.setVisibility(safeMode == 2 ? View.VISIBLE : View.GONE);
@@ -1002,7 +1021,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showEditAppRuleDialog(AppRuleEntity rule) {
-        View v = LayoutInflater.from(this).inflate(R.layout.dialog_edit_app_rule, null);
+        View v = LayoutInflater.from(dialogContext()).inflate(R.layout.dialog_edit_app_rule, null);
         SwitchMaterial swDirectEnabled = v.findViewById(R.id.sw_dlg_direct_enabled);
         SwitchMaterial swDirectRepeat = v.findViewById(R.id.sw_dlg_direct_repeat);
         EditText etDirectRepeatSec = v.findViewById(R.id.et_dlg_direct_repeat_sec);
@@ -1033,22 +1052,22 @@ public class MainActivity extends AppCompatActivity {
         etGroupRepeatSec.setText(String.valueOf(rule.groupRepeatIntervalSec));
         etGroupCooldownSec.setText(String.valueOf(rule.groupCooldownSec));
 
-        spSoundMode.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new String[]{
+        bindSpinner(spSoundMode, new String[]{
                 getString(R.string.sound_mode_watch_only),
                 getString(R.string.sound_mode_watch_and_phone),
                 getString(R.string.sound_mode_loud_alarm)
-        }));
+        });
         spSoundMode.setSelection(Math.min(2, Math.max(0, rule.phoneSoundMode)));
 
-        spHaptic.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new String[]{
+        bindSpinner(spHaptic, new String[]{
                 getString(R.string.haptic_teams_double),
                 getString(R.string.haptic_wa_long_short),
                 getString(R.string.haptic_group_short),
                 getString(R.string.haptic_urgent_wake)
-        }));
+        });
         spHaptic.setSelection(Math.min(3, Math.max(0, rule.hapticPattern)));
 
-        new AlertDialog.Builder(this)
+        newAlertDialogBuilder()
                 .setTitle(rule.appName)
                 .setView(v)
                 .setPositiveButton(R.string.btn_save, (d, w) -> {
@@ -1082,7 +1101,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showEditSenderRuleDialog(SenderRuleEntity existing) {
-        View v = LayoutInflater.from(this).inflate(R.layout.dialog_edit_sender_rule, null);
+        View v = LayoutInflater.from(dialogContext()).inflate(R.layout.dialog_edit_sender_rule, null);
         EditText etName = v.findViewById(R.id.et_dlg_sender_name);
         Spinner spApp = v.findViewById(R.id.sp_dlg_sender_app);
         Spinner spChatType = v.findViewById(R.id.sp_dlg_sender_chat_type);
@@ -1099,19 +1118,19 @@ public class MainActivity extends AppCompatActivity {
                 "WhatsApp",
                 "WhatsApp Business"
         };
-        spApp.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, appLabels));
+        bindSpinner(spApp, appLabels);
 
-        spChatType.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new String[]{
+        bindSpinner(spChatType, new String[]{
                 getString(R.string.chat_type_both),
                 getString(R.string.chat_type_direct),
                 getString(R.string.chat_type_group)
-        }));
+        });
 
-        spActionMode.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, new String[]{
+        bindSpinner(spActionMode, new String[]{
                 getString(R.string.rule_mode_repeat),
                 getString(R.string.rule_mode_once),
                 getString(R.string.rule_mode_mute)
-        }));
+        });
 
         SenderRuleEntity target = existing != null ? existing : new SenderRuleEntity();
         etName.setText(target.senderOrChatName);
@@ -1135,7 +1154,7 @@ public class MainActivity extends AppCompatActivity {
                 target.silentDaysMask
         );
 
-        new AlertDialog.Builder(this)
+        newAlertDialogBuilder()
                 .setTitle(existing == null ? R.string.dlg_new_sender_rule : R.string.dlg_edit_sender_rule)
                 .setView(v)
                 .setPositiveButton(R.string.btn_save, (d, w) -> {
@@ -1177,7 +1196,7 @@ public class MainActivity extends AppCompatActivity {
             ActionCache.CachedActions c = recent.get(i);
             labels[i] = (c.isGroup ? c.conversationTitle : c.senderName) + " (" + c.appLabel + ")";
         }
-        new AlertDialog.Builder(this)
+        newAlertDialogBuilder()
                 .setTitle(R.string.btn_pick_recent)
                 .setItems(labels, (d, idx) -> {
                     ActionCache.CachedActions c = recent.get(idx);
@@ -1212,7 +1231,7 @@ public class MainActivity extends AppCompatActivity {
         for (int i = 0; i < launchable.size(); i++) {
             labels[i] = pm.getApplicationLabel(launchable.get(i)).toString();
         }
-        new AlertDialog.Builder(this)
+        newAlertDialogBuilder()
                 .setTitle(R.string.btn_add_app)
                 .setItems(labels, (d, idx) -> {
                     ApplicationInfo ai = launchable.get(idx);
@@ -1238,7 +1257,7 @@ public class MainActivity extends AppCompatActivity {
             List<SenderRuleEntity> senders = db.senderRuleDao().getAllSync();
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String json = gson.toJson(java.util.Map.of("appRules", apps, "senderRules", senders));
-            runOnUiThread(() -> new AlertDialog.Builder(this)
+            runOnUiThread(() -> newAlertDialogBuilder()
                     .setTitle(R.string.btn_export_rules)
                     .setMessage(json)
                     .setNeutralButton(R.string.btn_copy, (d, w) -> {
@@ -1254,13 +1273,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showImportJsonDialog() {
-        EditText input = new EditText(this);
+        Context ctx = dialogContext();
+        int pad = Math.round(16 * getResources().getDisplayMetrics().density);
+        int innerPad = Math.round(10 * getResources().getDisplayMetrics().density);
+        android.widget.FrameLayout container = new android.widget.FrameLayout(ctx);
+        container.setPadding(pad, innerPad, pad, 0);
+        EditText input = new EditText(ctx);
         input.setHint(R.string.hint_paste_rules_json);
+        input.setBackgroundResource(R.drawable.bg_dialog_input);
+        input.setPadding(innerPad, innerPad, innerPad, innerPad);
+        input.setTextColor(getColor(R.color.text_primary));
+        input.setHintTextColor(getColor(R.color.text_secondary));
+        input.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
         input.setMinLines(6);
         input.setMaxLines(12);
-        new AlertDialog.Builder(this)
+        container.addView(input);
+        newAlertDialogBuilder()
                 .setTitle(R.string.btn_import_rules)
-                .setView(input)
+                .setView(container)
                 .setPositiveButton(R.string.btn_save, (d, w) -> {
                     String raw = input.getText().toString().trim();
                     if (raw.isEmpty()) return;

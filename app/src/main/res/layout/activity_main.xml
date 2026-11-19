@@ -525,50 +525,71 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/label_urgent_keywords"
                     android:textColor="@color/text_primary"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/et_urgent_keywords"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_dialog_input"
                     android:hint="@string/hint_urgent_keywords"
                     android:inputType="text"
+                    android:paddingStart="10dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="8dp"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_secondary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/label_teams_replies"
                     android:textColor="@color/text_primary"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/et_teams_replies"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_dialog_input"
                     android:hint="@string/hint_pipe_replies"
                     android:inputType="text"
+                    android:paddingStart="10dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="8dp"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_secondary" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/label_wa_replies"
                     android:textColor="@color/text_primary"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
 
                 <EditText
                     android:id="@+id/et_wa_replies"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:background="@drawable/bg_dialog_input"
                     android:hint="@string/hint_pipe_replies"
                     android:inputType="text"
+                    android:paddingStart="10dp"
+                    android:paddingTop="8dp"
+                    android:paddingEnd="10dp"
+                    android:paddingBottom="8dp"
                     android:textColor="@color/text_primary"
                     android:textColorHint="@color/text_secondary" />
 
@@ -754,8 +775,10 @@
                     android:layout_height="wrap_content"
                     android:layout_marginBottom="4dp"
                     android:text="@string/btn_config_after_hours"
-                    android:textColor="@color/brand_primary"
-                    android:textSize="12sp" />
+                    android:textAllCaps="false"
+                    android:textColor="@color/dialog_accent"
+                    android:textSize="12sp"
+                    app:strokeColor="@color/dialog_accent" />
 
                 <com.google.android.material.switchmaterial.SwitchMaterial
                     android:id="@+id/sw_phone_bridge_notif"
@@ -768,53 +791,85 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="8dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/label_max_repeat"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
 
-                <Spinner
-                    android:id="@+id/sp_max_repeat_minutes"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_dialog_input">
+
+                    <Spinner
+                        android:id="@+id/sp_max_repeat_minutes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/label_escalation_attempt"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
 
-                <Spinner
-                    android:id="@+id/sp_escalation_attempt"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_dialog_input">
+
+                    <Spinner
+                        android:id="@+id/sp_escalation_attempt"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/label_snooze_minutes"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
 
-                <Spinner
-                    android:id="@+id/sp_snooze_minutes"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="8dp" />
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/bg_dialog_input">
+
+                    <Spinner
+                        android:id="@+id/sp_snooze_minutes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </FrameLayout>
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
+                    android:layout_marginBottom="4dp"
                     android:text="@string/label_watch_tts_lang"
-                    android:textColor="@color/text_primary" />
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp" />
 
-                <Spinner
-                    android:id="@+id/sp_watch_tts_lang"
+                <FrameLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp" />
+                    android:layout_marginBottom="10dp"
+                    android:background="@drawable/bg_dialog_input">
+
+                    <Spinner
+                        android:id="@+id/sp_watch_tts_lang"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -829,6 +884,7 @@
                         android:layout_weight="1"
                         android:backgroundTint="@color/brand_primary"
                         android:text="@string/btn_export_rules"
+                        android:textAllCaps="false"
                         android:textColor="#FFFFFF"
                         android:textSize="12sp" />
 
@@ -840,8 +896,10 @@
                         android:layout_marginStart="6dp"
                         android:layout_weight="1"
                         android:text="@string/btn_import_rules"
-                        android:textColor="@color/brand_primary"
-                        android:textSize="12sp" />
+                        android:textAllCaps="false"
+                        android:textColor="@color/dialog_accent"
+                        android:textSize="12sp"
+                        app:strokeColor="@color/dialog_accent" />
                 </LinearLayout>
             </LinearLayout>
         </ScrollView>

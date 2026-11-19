@@ -104,6 +104,9 @@
     <string name="dlg_repeat_persistent">Repeat in Persistent Mode</string>
     <string name="hint_repeat_sec">Repeat every (seconds)</string>
     <string name="hint_cooldown_sec">Burst Cooling Time (sec, 0 = off)</string>
+    <string name="label_repeat_sec">Repeat every (sec)</string>
+    <string name="label_cooldown_sec">Cooling (sec, 0=off)</string>
+    <string name="label_sound_haptic_section">Alerts &amp; Haptics</string>
     <string name="dlg_sound_mode">Phone Audio Mode</string>
     <string name="sound_mode_watch_only">Watch Only (No phone sound)</string>
     <string name="sound_mode_watch_and_phone">Watch + Phone Notification</string>
@@ -114,6 +117,8 @@
     <string name="haptic_group_short">Group Short Tap</string>
     <string name="haptic_urgent_wake">Urgent Wake-Up Rhythm</string>
     <string name="dlg_silent_watch_section">Silent Delivery on Watch (ignores phone vibration/sound)</string>
+    <string name="label_silent_mode">Watch Delivery Mode</string>
+    <string name="label_silent_window">Schedule Window</string>
     <string name="silent_mode_off">Alert Normally</string>
     <string name="silent_mode_follow_app">Follow App Setting / Default</string>
     <string name="silent_mode_all_day">Silent All Day on Watch</string>
@@ -144,6 +149,12 @@
     <string name="cooling_fmt">Cool %1$ds</string>
     <string name="dlg_new_sender_rule">New Sender / Chat Rule</string>
     <string name="dlg_edit_sender_rule">Edit Sender / Chat Rule</string>
+    <string name="label_sender_target_section">Contact or Chat Target</string>
+    <string name="label_sender_timing_section">Timing &amp; Priority</string>
+    <string name="label_sender_name">Sender or Group Name</string>
+    <string name="label_sender_app">Source App</string>
+    <string name="label_sender_chat_type">Chat Type</string>
+    <string name="label_sender_action">Alert Action</string>
     <string name="hint_sender_or_group">Sender or Group name</string>
     <string name="rule_mode_repeat">Repeat Alert</string>
     <string name="rule_mode_once">Notify Once (No Repeat)</string>
@@ -180,6 +191,7 @@
     <string name="after_hours_days_daily">Daily</string>
     <string name="btn_config_after_hours">Configure Schedule &amp; Silenced Apps</string>
     <string name="dlg_after_hours_title">After-Hours Schedule &amp; Apps</string>
+    <string name="label_after_hours_window">Silenced Schedule</string>
     <string name="dlg_ah_start_default">Start Time</string>
     <string name="dlg_ah_end_default">End Time</string>
     <string name="dlg_ah_start_btn_fmt">Start: %1$s</string>

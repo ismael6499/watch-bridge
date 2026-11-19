@@ -18,4 +18,11 @@
     <color name="repeat_gold">#FFD54F</color>
     <color name="danger_red">#E53935</color>
     <color name="ok_green">#66BB6A</color>
+    <color name="dialog_bg">#161C28</color>
+    <color name="dialog_section_bg">#1F2838</color>
+    <color name="dialog_section_stroke">#313E54</color>
+    <color name="dialog_input_bg">#121824</color>
+    <color name="dialog_input_stroke">#3D4C66</color>
+    <color name="dialog_accent">#00E5FF</color>
+    <color name="dialog_accent_text">#06131A</color>
 </resources>

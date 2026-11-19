@@ -2,64 +2,227 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="14dp">
+    android:background="@color/dialog_bg"
+    android:fillViewport="true"
+    android:paddingStart="16dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="16dp"
+    android:paddingBottom="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:focusableInTouchMode="true"
         android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/et_dlg_sender_name"
+        <!-- SECTION 1: TARGET -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/hint_sender_or_group"
-            android:inputType="text" />
+            android:background="@drawable/bg_dialog_section"
+            android:orientation="vertical"
+            android:padding="12dp">
 
-        <Spinner
-            android:id="@+id/sp_dlg_sender_app"
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.03"
+                android:text="@string/label_sender_target_section"
+                android:textColor="@color/dialog_accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_sender_name"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <EditText
+                android:id="@+id/et_dlg_sender_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_input"
+                android:hint="@string/hint_sender_or_group"
+                android:inputType="text"
+                android:paddingStart="10dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="10dp"
+                android:paddingBottom="8dp"
+                android:textColor="@color/text_primary"
+                android:textColorHint="@color/text_secondary"
+                android:textSize="14sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_sender_app"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_input">
+
+                <Spinner
+                    android:id="@+id/sp_dlg_sender_app"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_sender_chat_type"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_input">
+
+                <Spinner
+                    android:id="@+id/sp_dlg_sender_chat_type"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </FrameLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginBottom="4dp"
+                android:text="@string/label_sender_action"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_dialog_input">
+
+                <Spinner
+                    android:id="@+id/sp_dlg_sender_action"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- SECTION 2: TIMING & PRIORITY -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp" />
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_dialog_section"
+            android:orientation="vertical"
+            android:padding="12dp">
 
-        <Spinner
-            android:id="@+id/sp_dlg_sender_chat_type"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp" />
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:letterSpacing="0.03"
+                android:text="@string/label_sender_timing_section"
+                android:textColor="@color/dialog_accent"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-        <Spinner
-            android:id="@+id/sp_dlg_sender_action"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp" />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal">
 
-        <EditText
-            android:id="@+id/et_dlg_sender_repeat_sec"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/hint_repeat_sec"
-            android:inputType="number" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="6dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/et_dlg_sender_cooldown_sec"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/hint_cooldown_sec"
-            android:inputType="number" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:text="@string/label_repeat_sec"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
 
-        <CheckBox
-            android:id="@+id/cb_dlg_sender_vip"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dlg_vip_checkbox" />
+                    <EditText
+                        android:id="@+id/et_dlg_sender_repeat_sec"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_dialog_input"
+                        android:hint="@string/hint_repeat_sec"
+                        android:inputType="number"
+                        android:paddingStart="10dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="8dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary"
+                        android:textSize="14sp" />
+                </LinearLayout>
 
-        <CheckBox
-            android:id="@+id/cb_dlg_sender_alarm"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/dlg_alarm_override" />
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="4dp"
+                        android:text="@string/label_cooldown_sec"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/et_dlg_sender_cooldown_sec"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="@drawable/bg_dialog_input"
+                        android:hint="@string/hint_cooldown_sec"
+                        android:inputType="number"
+                        android:paddingStart="10dp"
+                        android:paddingTop="8dp"
+                        android:paddingEnd="10dp"
+                        android:paddingBottom="8dp"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary"
+                        android:textSize="14sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <CheckBox
+                android:id="@+id/cb_dlg_sender_vip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="@string/dlg_vip_checkbox"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+
+            <CheckBox
+                android:id="@+id/cb_dlg_sender_alarm"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/dlg_alarm_override"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- SECTION 3: SILENT WATCH DELIVERY -->
         <include layout="@layout/include_silent_watch_schedule" />
     </LinearLayout>
 </ScrollView>

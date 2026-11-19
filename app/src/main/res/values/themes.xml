@@ -7,5 +7,51 @@
         <item name="colorSecondary">@color/brand_accent</item>
         <item name="colorOnSecondary">#000000</item>
         <item name="android:statusBarColor">@color/brand_primary_dark</item>
+        <item name="alertDialogTheme">@style/ThemeOverlay.WatchBridge.Dialog</item>
+        <item name="materialAlertDialogTheme">@style/ThemeOverlay.WatchBridge.Dialog</item>
+        <item name="android:timePickerDialogTheme">@style/ThemeOverlay.WatchBridge.TimePicker</item>
+    </style>
+
+    <style name="ThemeOverlay.WatchBridge.Dialog" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="colorPrimary">@color/dialog_accent</item>
+        <item name="colorSecondary">@color/dialog_accent</item>
+        <item name="colorAccent">@color/dialog_accent</item>
+        <item name="colorControlActivated">@color/dialog_accent</item>
+        <item name="colorControlNormal">@color/text_secondary</item>
+        <item name="colorSurface">@color/dialog_bg</item>
+        <item name="android:colorBackgroundFloating">@color/dialog_bg</item>
+        <item name="android:windowBackground">@drawable/bg_dialog_window</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.WatchBridge.DialogButton.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.WatchBridge.DialogButton.Negative</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Widget.WatchBridge.DialogButton.Neutral</item>
+    </style>
+
+    <style name="ThemeOverlay.WatchBridge.TimePicker" parent="ThemeOverlay.MaterialComponents.Dialog">
+        <item name="colorPrimary">@color/dialog_accent</item>
+        <item name="colorAccent">@color/dialog_accent</item>
+        <item name="colorSurface">@color/dialog_bg</item>
+        <item name="android:colorBackgroundFloating">@color/dialog_bg</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Widget.WatchBridge.DialogButton.Positive</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Widget.WatchBridge.DialogButton.Negative</item>
+    </style>
+
+    <style name="Widget.WatchBridge.DialogButton.Positive" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/dialog_accent</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.WatchBridge.DialogButton.Negative" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:textAllCaps">false</item>
+    </style>
+
+    <style name="Widget.WatchBridge.DialogButton.Neutral" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/brand_accent_text</item>
+        <item name="android:textAllCaps">false</item>
     </style>
 </resources>

@@ -104,6 +104,9 @@
     <string name="dlg_repeat_persistent">Repetir en Modo Persistente</string>
     <string name="hint_repeat_sec">Repetir cada (segundos)</string>
     <string name="hint_cooldown_sec">Cooling Time anti-ráfagas (seg, 0 = apagado)</string>
+    <string name="label_repeat_sec">Repetir cada (seg)</string>
+    <string name="label_cooldown_sec">Cooling (seg, 0=off)</string>
+    <string name="label_sound_haptic_section">Alertas y Vibración</string>
     <string name="dlg_sound_mode">Sonido en el Celular</string>
     <string name="sound_mode_watch_only">Solo Reloj (Sin sonido en celular)</string>
     <string name="sound_mode_watch_and_phone">Reloj + Notificación en Celular</string>
@@ -114,6 +117,8 @@
     <string name="haptic_group_short">Grupo Toque Corto</string>
     <string name="haptic_urgent_wake">Ritmo Despertador Urgente</string>
     <string name="dlg_silent_watch_section">Silencio en Reloj (llega sin vibrar aunque vibre el celular)</string>
+    <string name="label_silent_mode">Modo en el Reloj</string>
+    <string name="label_silent_window">Franja Horaria</string>
     <string name="silent_mode_off">Avisar Normal</string>
     <string name="silent_mode_follow_app">Seguir Regla de App / Normal</string>
     <string name="silent_mode_all_day">Silencioso Todo el Día en Reloj</string>
@@ -144,6 +149,12 @@
     <string name="cooling_fmt">Cool %1$ds</string>
     <string name="dlg_new_sender_rule">Nueva Regla por Persona o Grupo</string>
     <string name="dlg_edit_sender_rule">Editar Regla</string>
+    <string name="label_sender_target_section">Contacto o Chat</string>
+    <string name="label_sender_timing_section">Tiempos y Prioridad</string>
+    <string name="label_sender_name">Nombre de Persona o Grupo</string>
+    <string name="label_sender_app">Aplicación</string>
+    <string name="label_sender_chat_type">Tipo de Chat</string>
+    <string name="label_sender_action">Acción de Alerta</string>
     <string name="hint_sender_or_group">Nombre de persona o grupo</string>
     <string name="rule_mode_repeat">Repetir Alerta</string>
     <string name="rule_mode_once">Sonar 1 sola vez</string>
@@ -180,6 +191,7 @@
     <string name="after_hours_days_daily">Todos los días</string>
     <string name="btn_config_after_hours">Configurar Horario y Apps Silenciadas</string>
     <string name="dlg_after_hours_title">Horario Post-Trabajo y Apps</string>
+    <string name="label_after_hours_window">Ventana Horaria</string>
     <string name="dlg_ah_start_default">Hora Inicio</string>
     <string name="dlg_ah_end_default">Hora Fin</string>
     <string name="dlg_ah_start_btn_fmt">Inicio: %1$s</string>
