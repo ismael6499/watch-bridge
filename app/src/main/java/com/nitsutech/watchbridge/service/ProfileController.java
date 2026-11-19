@@ -49,7 +49,6 @@ public class ProfileController {
                 ScheduleAndTimerReceiver.cancelRepeatAutoOff(context);
             }
             prefs.resetRepeatCounters();
-            PersistentRepeatForegroundService.startRepeatForeground(context);
         } else {
             prefs.setRepeatEndTimeMs(0L);
             ScheduleAndTimerReceiver.cancelRepeatAutoOff(context);

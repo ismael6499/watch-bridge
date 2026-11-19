@@ -152,10 +152,9 @@ public class PersistentRepeatForegroundService extends Service {
             }
             ProxyNotificationHelper.cancelNotificationForChat(context, convKey);
         }
-        PrefsManager prefs = new PrefsManager(context);
         PersistentRepeatForegroundService inst = activeInstance;
         if (inst != null) {
-            if (!prefs.isRepeatMode() && SESSIONS.isEmpty()) {
+            if (SESSIONS.isEmpty()) {
                 inst.stopForeground(STOP_FOREGROUND_REMOVE);
                 inst.stopSelf();
             } else {
@@ -171,15 +170,10 @@ public class PersistentRepeatForegroundService extends Service {
         }
         SESSIONS.clear();
         ProxyNotificationHelper.cancelAllNotifications(context);
-        PrefsManager prefs = new PrefsManager(context);
         PersistentRepeatForegroundService inst = activeInstance;
         if (inst != null) {
-            if (!prefs.isRepeatMode()) {
-                inst.stopForeground(STOP_FOREGROUND_REMOVE);
-                inst.stopSelf();
-            } else {
-                inst.updatePersistentNotification();
-            }
+            inst.stopForeground(STOP_FOREGROUND_REMOVE);
+            inst.stopSelf();
         }
         broadcastAndSync(context);
     }
@@ -208,6 +202,12 @@ public class PersistentRepeatForegroundService extends Service {
         PrefsManager prefs = new PrefsManager(this);
 
         if (ACTION_START_REPEAT.equals(action)) {
+            if (SESSIONS.isEmpty()) {
+                notifyStateChanged();
+                stopForeground(STOP_FOREGROUND_REMOVE);
+                stopSelf();
+                return START_NOT_STICKY;
+            }
             updatePersistentNotification();
             notifyStateChanged();
             return START_STICKY;
@@ -220,13 +220,9 @@ public class PersistentRepeatForegroundService extends Service {
         } else if (ACTION_STOP_ALL_ALERTS.equals(action)) {
             clearAllSessionFutures();
             notifyStateChanged();
-            if (!prefs.isRepeatMode()) {
-                stopForeground(STOP_FOREGROUND_REMOVE);
-                stopSelf();
-            } else {
-                updatePersistentNotification();
-            }
-            return START_STICKY;
+            stopForeground(STOP_FOREGROUND_REMOVE);
+            stopSelf();
+            return START_NOT_STICKY;
         } else if (ACTION_STOP_CHAT.equals(action)) {
             String key = intent.getStringExtra(EXTRA_CONV_KEY);
             if (key != null) {
@@ -234,12 +230,12 @@ public class PersistentRepeatForegroundService extends Service {
                 if (s != null && s.future != null) s.future.cancel(false);
             }
             notifyStateChanged();
-            if (!prefs.isRepeatMode() && SESSIONS.isEmpty()) {
+            if (SESSIONS.isEmpty()) {
                 stopForeground(STOP_FOREGROUND_REMOVE);
                 stopSelf();
-            } else {
-                updatePersistentNotification();
+                return START_NOT_STICKY;
             }
+            updatePersistentNotification();
             return START_STICKY;
         } else if (ACTION_ENQUEUE_REPEAT.equals(action)) {
             handleEnqueueRepeat(intent);
@@ -450,6 +446,9 @@ public class PersistentRepeatForegroundService extends Service {
                 .setContentTitle(title)
                 .setContentText(body)
                 .setOngoing(true)
+                .setSilent(true)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
+                .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_DEFERRED)
                 .setContentIntent(contentPi)
                 .addAction(R.drawable.ic_stop, stopLabel, stopPi)
                 .build();

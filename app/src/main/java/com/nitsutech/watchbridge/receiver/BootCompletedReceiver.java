@@ -21,7 +21,6 @@ public class BootCompletedReceiver extends BroadcastReceiver {
                 prefs.setActiveProfile(PrefsManager.PROFILE_NORMAL);
                 prefs.setRepeatEndTimeMs(0L);
             } else {
-                PersistentRepeatForegroundService.startRepeatForeground(context);
                 if (end > 0) {
                     ScheduleAndTimerReceiver.scheduleRepeatAutoOff(context, end);
                 }

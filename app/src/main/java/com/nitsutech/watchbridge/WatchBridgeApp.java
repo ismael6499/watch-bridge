@@ -18,7 +18,7 @@ public class WatchBridgeApp extends Application {
     public static final String CHANNEL_PROXY_SILENT = "watchbridge_proxy_silent";
     public static final String CHANNEL_PROXY_REPEAT = "watchbridge_proxy_repeat";
     public static final String CHANNEL_PROXY_URGENT = "watchbridge_proxy_urgent";
-    public static final String CHANNEL_SERVICE = "watchbridge_service";
+    public static final String CHANNEL_SERVICE = "watchbridge_service_v2";
 
     @Override
     public void onCreate() {
@@ -90,13 +90,16 @@ public class WatchBridgeApp extends Application {
         silentChannel.enableVibration(false);
         silentChannel.setSound(null, null);
 
+        nm.deleteNotificationChannel("watchbridge_service");
         NotificationChannel serviceChannel = new NotificationChannel(
                 CHANNEL_SERVICE,
                 getString(R.string.channel_service_name),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_MIN
         );
         serviceChannel.setDescription(getString(R.string.channel_service_desc));
         serviceChannel.setShowBadge(false);
+        serviceChannel.setSound(null, null);
+        serviceChannel.enableVibration(false);
 
         nm.createNotificationChannel(normalChannel);
         nm.createNotificationChannel(silentChannel);
