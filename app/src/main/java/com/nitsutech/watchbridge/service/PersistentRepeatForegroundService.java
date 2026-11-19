@@ -56,6 +56,7 @@ public class PersistentRepeatForegroundService extends Service {
     public static final String EXTRA_HAPTIC_PATTERN = "haptic_pattern";
     public static final String EXTRA_HAS_VOICE = "has_voice";
     public static final String EXTRA_MEDIA_B64 = "media_b64";
+    public static final String EXTRA_NO_ESCALATION = "no_escalation";
 
     private static final int FOREGROUND_ID = 1001;
 
@@ -75,6 +76,7 @@ public class PersistentRepeatForegroundService extends Service {
         public int hapticPattern;
         public long startedAtMs;
         public int attemptCount = 1;
+        public boolean disableEscalation = false;
         public ScheduledFuture<?> future;
     }
 
@@ -114,6 +116,15 @@ public class PersistentRepeatForegroundService extends Service {
                                      String convTitle, String sender, String text,
                                      boolean isGroup, boolean isCall, int repeatSec,
                                      int soundMode, int hapticPattern, boolean hasVoice, String mediaB64) {
+        enqueueRepeat(context, convKey, pkg, appLabel, convTitle, sender, text,
+                isGroup, isCall, repeatSec, soundMode, hapticPattern, hasVoice, mediaB64, false);
+    }
+
+    public static void enqueueRepeat(Context context, String convKey, String pkg, String appLabel,
+                                     String convTitle, String sender, String text,
+                                     boolean isGroup, boolean isCall, int repeatSec,
+                                     int soundMode, int hapticPattern, boolean hasVoice, String mediaB64,
+                                     boolean disableEscalation) {
         Intent i = new Intent(context, PersistentRepeatForegroundService.class);
         i.setAction(ACTION_ENQUEUE_REPEAT);
         i.putExtra(EXTRA_CONV_KEY, convKey);
@@ -129,6 +140,7 @@ public class PersistentRepeatForegroundService extends Service {
         i.putExtra(EXTRA_HAPTIC_PATTERN, hapticPattern);
         i.putExtra(EXTRA_HAS_VOICE, hasVoice);
         i.putExtra(EXTRA_MEDIA_B64, mediaB64 == null ? "" : mediaB64);
+        i.putExtra(EXTRA_NO_ESCALATION, disableEscalation);
         ContextCompat.startForegroundService(context, i);
     }
 
@@ -249,6 +261,7 @@ public class PersistentRepeatForegroundService extends Service {
             existing.latestText = intent.getStringExtra(EXTRA_TEXT);
             existing.hasVoiceNote = intent.getBooleanExtra(EXTRA_HAS_VOICE, false);
             existing.mediaBase64 = intent.getStringExtra(EXTRA_MEDIA_B64);
+            existing.disableEscalation = intent.getBooleanExtra(EXTRA_NO_ESCALATION, false);
             return;
         }
 
@@ -266,6 +279,7 @@ public class PersistentRepeatForegroundService extends Service {
         session.hapticPattern = intent.getIntExtra(EXTRA_HAPTIC_PATTERN, 0);
         session.hasVoiceNote = intent.getBooleanExtra(EXTRA_HAS_VOICE, false);
         session.mediaBase64 = intent.getStringExtra(EXTRA_MEDIA_B64);
+        session.disableEscalation = intent.getBooleanExtra(EXTRA_NO_ESCALATION, false);
         session.startedAtMs = System.currentTimeMillis();
         session.attemptCount = 1;
 
@@ -310,7 +324,7 @@ public class PersistentRepeatForegroundService extends Service {
         }
 
         session.attemptCount++;
-        boolean progressive = prefs.isProgressiveEscalationEnabled();
+        boolean progressive = !session.disableEscalation && prefs.isProgressiveEscalationEnabled();
         int escalateAt = prefs.getEscalationAttemptThreshold();
         int escalationLevel = progressive
                 ? (session.attemptCount >= escalateAt ? 3 : session.attemptCount)

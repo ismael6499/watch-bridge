@@ -264,8 +264,21 @@
                             android:layout_marginTop="6dp"
                             android:backgroundTint="@color/brand_primary"
                             android:text="@string/btn_test_watch_alert"
+                            android:textAllCaps="false"
                             android:textColor="#FFFFFF"
                             android:textSize="12sp" />
+
+                        <Button
+                            android:id="@+id/btn_test_normal_message"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:backgroundTint="@color/btn_mode_bg"
+                            android:text="@string/btn_test_normal_message"
+                            android:textAllCaps="false"
+                            android:textColor="@color/dialog_accent"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
 
                         <Button
                             android:id="@+id/btn_test_watch_call"
@@ -274,6 +287,7 @@
                             android:layout_marginTop="4dp"
                             android:backgroundTint="#1B5E20"
                             android:text="@string/btn_test_watch_call"
+                            android:textAllCaps="false"
                             android:textColor="#FFFFFF"
                             android:textSize="12sp" />
 
@@ -284,8 +298,10 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="4dp"
                             android:text="@string/btn_test_replay_active"
-                            android:textColor="@color/brand_primary"
-                            android:textSize="12sp" />
+                            android:textAllCaps="false"
+                            android:textColor="@color/dialog_accent"
+                            android:textSize="12sp"
+                            app:strokeColor="@color/dialog_accent" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 

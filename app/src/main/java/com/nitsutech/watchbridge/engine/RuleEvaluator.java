@@ -33,6 +33,12 @@ public class RuleEvaluator {
 
     public static Decision evaluate(Context context, ParsedMessage msg, AppRuleEntity appRule,
                                     List<SenderRuleEntity> senderRules, PrefsManager prefs, long nowMs) {
+        return evaluate(context, msg, appRule, senderRules, prefs, nowMs, false);
+    }
+
+    public static Decision evaluate(Context context, ParsedMessage msg, AppRuleEntity appRule,
+                                    List<SenderRuleEntity> senderRules, PrefsManager prefs, long nowMs,
+                                    boolean bypassPhoneInUse) {
         Decision d = new Decision();
         if (msg == null || appRule == null) {
             return d;
@@ -118,7 +124,7 @@ public class RuleEvaluator {
         }
 
         // Idea #9: Optional Smart Phone-In-Use Suppression in non-Repeat profiles
-        if (!repeatMode && prefs.isPhoneInUseSuppressionEnabled() && !d.isVip && !msg.isIncomingCall && isPhoneActivelyInUse(context)) {
+        if (!bypassPhoneInUse && !repeatMode && prefs.isPhoneInUseSuppressionEnabled() && !d.isVip && !msg.isIncomingCall && isPhoneActivelyInUse(context)) {
             d.shouldBridge = false;
             d.shouldRepeat = false;
             d.suppressedPhoneInUse = true;

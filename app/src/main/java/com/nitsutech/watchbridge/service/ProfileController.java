@@ -18,6 +18,9 @@ import com.nitsutech.watchbridge.data.ChatMessageEntity;
 import com.nitsutech.watchbridge.data.PrefsManager;
 import com.nitsutech.watchbridge.data.SenderRuleEntity;
 import com.nitsutech.watchbridge.engine.ActionCache;
+import com.nitsutech.watchbridge.engine.CooldownTracker;
+import com.nitsutech.watchbridge.engine.ParsedMessage;
+import com.nitsutech.watchbridge.engine.RuleEvaluator;
 import com.nitsutech.watchbridge.receiver.ScheduleAndTimerReceiver;
 import com.nitsutech.watchbridge.wear.WearDataLayerManager;
 import com.nitsutech.watchbridge.widget.BridgeWidgetUpdater;
@@ -436,6 +439,119 @@ public class ProfileController {
                     "WatchBridge Test Ping", "Test Alert (Teams)",
                     msg.messageText, false, false, 10, 0, 0, true, ""
             );
+        });
+    }
+
+    public static void triggerTestNormalTeamsMessage(Context context, java.util.function.Consumer<String> onResult) {
+        AppDatabase db = AppDatabase.getInstance(context);
+        PrefsManager prefs = new PrefsManager(context);
+        db.executor().execute(() -> {
+            db.ensureDefaultsSync();
+            long now = System.currentTimeMillis();
+            String convKey = "test-normal|" + AppDatabase.PKG_TEAMS + "|sample-chat";
+            CooldownTracker.clearCooldown(convKey);
+
+            ParsedMessage parsed = new ParsedMessage();
+            parsed.conversationKey = convKey;
+            parsed.packageName = AppDatabase.PKG_TEAMS;
+            parsed.appLabel = "Microsoft Teams";
+            parsed.conversationTitle = "Teams Normal Test";
+            parsed.senderName = context.getString(R.string.test_normal_sender_name);
+            parsed.messageText = context.getString(R.string.test_normal_message_body);
+            parsed.timestamp = now;
+            parsed.isGroup = false;
+            parsed.isIncomingCall = false;
+            parsed.isSourceSilent = false;
+            parsed.notificationKind = com.nitsutech.watchbridge.wear.WearProtocol.KIND_CHAT;
+            parsed.canReply = true;
+            parsed.canMarkRead = true;
+
+            AppRuleEntity appRule = db.appRuleDao().getByPackageSync(AppDatabase.PKG_TEAMS);
+            List<SenderRuleEntity> senderRules = db.senderRuleDao().getAllSync();
+            RuleEvaluator.Decision decision = RuleEvaluator.evaluate(
+                    context, parsed, appRule, senderRules, prefs, now, true);
+
+            if (!decision.shouldBridge) {
+                if (decision.suppressedAfterHours) {
+                    ChatMessageEntity entity = new ChatMessageEntity();
+                    entity.conversationKey = convKey;
+                    entity.packageName = parsed.packageName;
+                    entity.appLabel = parsed.appLabel;
+                    entity.conversationTitle = parsed.conversationTitle;
+                    entity.senderName = parsed.senderName;
+                    entity.messageText = parsed.messageText;
+                    entity.timestamp = now;
+                    entity.isDismissed = true;
+                    entity.isAfterHoursMuted = true;
+                    db.chatMessageDao().insert(entity);
+                }
+                String msg = context.getString(R.string.toast_test_normal_blocked);
+                if (onResult != null) onResult.accept(msg);
+                return;
+            }
+
+            ChatMessageEntity entity = new ChatMessageEntity();
+            entity.conversationKey = convKey;
+            entity.packageName = parsed.packageName;
+            entity.appLabel = parsed.appLabel;
+            entity.conversationTitle = parsed.conversationTitle;
+            entity.senderName = parsed.senderName;
+            entity.messageText = parsed.messageText;
+            entity.timestamp = now;
+            entity.isGroup = false;
+            entity.notificationKind = parsed.notificationKind;
+            entity.canReply = true;
+            entity.canMarkRead = true;
+            db.chatMessageDao().insert(entity);
+
+            List<ChatMessageEntity> thread = db.chatMessageDao().getActiveThreadSync(convKey);
+            if (prefs.isPhoneBridgeNotifEnabled()) {
+                ProxyNotificationHelper.postOrRepingProxyNotification(
+                        context, convKey, parsed.packageName, parsed.appLabel,
+                        parsed.conversationTitle, false, false, decision.silentOnWatch,
+                        false, decision.silentOnWatch, thread, prefs
+                );
+            }
+            if (!decision.silentOnWatch) {
+                AlertAudioHelper.playPhoneAlert(context, decision.phoneSoundMode, false);
+            }
+
+            com.nitsutech.watchbridge.wear.WearProtocol.AlertTickPayload tick =
+                    new com.nitsutech.watchbridge.wear.WearProtocol.AlertTickPayload();
+            tick.conversationKey = convKey;
+            tick.packageName = parsed.packageName;
+            tick.appLabel = parsed.appLabel;
+            tick.conversationTitle = parsed.conversationTitle;
+            tick.senderName = parsed.senderName;
+            tick.messageText = parsed.messageText;
+            tick.attemptCount = 1;
+            tick.hapticPattern = decision.hapticPattern;
+            tick.escalationLevel = 1;
+            tick.notificationKind = parsed.notificationKind;
+            tick.canReply = true;
+            tick.canMarkRead = true;
+            tick.isRepeating = decision.shouldRepeat;
+            tick.silentOnWatch = decision.silentOnWatch;
+            tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(parsed.packageName));
+            WearDataLayerManager.syncAndSendAlertBlocking(context, tick);
+
+            String resultMsg;
+            if (decision.silentOnWatch) {
+                resultMsg = context.getString(R.string.toast_test_normal_silent);
+            } else if (decision.shouldRepeat) {
+                PersistentRepeatForegroundService.enqueueRepeat(
+                        context, convKey, parsed.packageName, parsed.appLabel,
+                        parsed.conversationTitle, parsed.senderName, parsed.messageText,
+                        false, false, decision.repeatIntervalSec,
+                        decision.phoneSoundMode, decision.hapticPattern, false, "", true
+                );
+                resultMsg = context.getString(R.string.toast_test_normal_repeat_fmt, decision.repeatIntervalSec);
+            } else {
+                resultMsg = context.getString(R.string.toast_test_normal_once);
+            }
+            context.sendBroadcast(new Intent(PersistentRepeatForegroundService.ACTION_STATE_BROADCAST)
+                    .setPackage(context.getPackageName()));
+            if (onResult != null) onResult.accept(resultMsg);
         });
     }
 

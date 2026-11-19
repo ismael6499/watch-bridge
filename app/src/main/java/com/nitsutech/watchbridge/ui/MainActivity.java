@@ -360,6 +360,13 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, R.string.toast_test_alert_sent, Toast.LENGTH_SHORT).show();
         });
 
+        findViewById(R.id.btn_test_normal_message).setOnClickListener(v ->
+                ProfileController.triggerTestNormalTeamsMessage(this, statusMsg ->
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, statusMsg, Toast.LENGTH_SHORT).show();
+                            refreshUi();
+                        })));
+
         findViewById(R.id.btn_test_watch_call).setOnClickListener(v -> {
             ProfileController.triggerTestCall(this);
             Toast.makeText(this, R.string.toast_test_call_sent, Toast.LENGTH_SHORT).show();

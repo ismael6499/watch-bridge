@@ -28,6 +28,8 @@
     <string name="action_stop_alert">Stop Alert</string>
     <string name="action_end_repeat">End Repeat</string>
     <string name="test_alert_message_body">Persistent alert test ping from WatchBridge! Reply, Snooze 3m, or Dismiss on your Galaxy Watch.</string>
+    <string name="test_normal_sender_name">Teams Test Chat</string>
+    <string name="test_normal_message_body">Normal Teams test message (follows current mode without escalation).</string>
 
     <!-- Bottom Nav -->
     <string name="nav_home">Hub</string>
@@ -62,6 +64,7 @@
     <string name="btn_stop_all">Stop All</string>
     <string name="btn_sync_watch">Sync Watch</string>
     <string name="btn_test_watch_alert">Test Watch Alert &amp; Escalation</string>
+    <string name="btn_test_normal_message">Test Normal Teams Message (No Escalation)</string>
     <string name="btn_test_watch_call">Test Incoming Call on Watch</string>
     <string name="btn_test_replay_active">Replay Visible Phone Notifications</string>
 
@@ -252,6 +255,10 @@
     <string name="toast_sync_sent">Synced state to Galaxy Watch</string>
     <string name="toast_alerts_stopped">All repeating alerts stopped</string>
     <string name="toast_test_alert_sent">Test alert started (repeats every 10s until dismissed)</string>
+    <string name="toast_test_normal_once">Teams test sent once (no repeat, no escalation)</string>
+    <string name="toast_test_normal_repeat_fmt">Teams test repeating every %1$ds (no escalation)</string>
+    <string name="toast_test_normal_silent">Teams test delivered silently to Watch (rule active)</string>
+    <string name="toast_test_normal_blocked">Teams test blocked by active rule or After-Hours</string>
     <string name="toast_test_call_sent">Test incoming call sent to Galaxy Watch</string>
     <string name="toast_replay_sent_fmt">Forwarded %1$d active notification(s) to Watch</string>
     <string name="toast_replay_empty">No active notifications from enabled apps</string>
