@@ -56,6 +56,117 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         super.onDestroy();
     }
 
+    public interface ReplayCallback {
+        void onComplete(int sentCount);
+    }
+
+    public static void replayActiveNotificationsNow(android.content.Context context, ReplayCallback callback) {
+        BridgeNotificationListenerService inst = activeInstance;
+        if (inst == null) {
+            if (callback != null) callback.onComplete(-1);
+            return;
+        }
+        StatusBarNotification[] active;
+        RankingMap ranking;
+        try {
+            active = inst.getActiveNotifications();
+            ranking = inst.getCurrentRanking();
+        } catch (Exception e) {
+            if (callback != null) callback.onComplete(-1);
+            return;
+        }
+        if (active == null || active.length == 0) {
+            if (callback != null) callback.onComplete(0);
+            return;
+        }
+        PrefsManager prefs = new PrefsManager(inst);
+        AppDatabase db = AppDatabase.getInstance(inst);
+        db.executor().execute(() -> {
+            db.ensureDefaultsSync();
+            int count = 0;
+            for (StatusBarNotification sbn : active) {
+                ParsedMessage parsed = NotificationParser.parse(inst, sbn, ranking, prefs);
+                if (parsed == null || parsed.isDeletedNotice) continue;
+
+                AppRuleEntity appRule = db.appRuleDao().getByPackageSync(parsed.packageName);
+                if (appRule == null || !appRule.enabled) continue;
+
+                ActionCache.put(parsed);
+                ChatMessageEntity existingLatest = db.chatMessageDao().getLatestIncomingSync(parsed.conversationKey);
+                boolean alreadyRecorded = existingLatest != null
+                        && !existingLatest.isDismissed
+                        && existingLatest.timestamp == parsed.timestamp
+                        && TextUtils.equals(existingLatest.messageText, parsed.messageText);
+                if (!alreadyRecorded) {
+                    ChatMessageEntity entity = new ChatMessageEntity();
+                    entity.conversationKey = parsed.conversationKey;
+                    entity.packageName = parsed.packageName;
+                    entity.appLabel = parsed.appLabel;
+                    entity.conversationTitle = parsed.conversationTitle;
+                    entity.senderName = parsed.senderName;
+                    entity.messageText = parsed.messageText;
+                    entity.timestamp = parsed.timestamp;
+                    entity.isGroup = parsed.isGroup;
+                    entity.isOutgoing = false;
+                    entity.notificationKind = parsed.notificationKind;
+                    entity.canReply = parsed.canReply;
+                    entity.canMarkRead = parsed.canMarkRead;
+                    entity.mediaPath = parsed.mediaPath;
+                    entity.mediaBase64 = parsed.mediaBase64;
+                    entity.hasVoiceNote = parsed.hasVoiceNote;
+                    entity.voiceNoteUri = parsed.voiceNoteUri;
+                    db.chatMessageDao().insert(entity);
+                }
+
+                WearProtocol.AlertTickPayload tick = buildAlertTick(
+                        parsed,
+                        parsed.isGroup ? 2 : appRule.hapticPattern,
+                        false,
+                        prefs
+                );
+                WearDataLayerManager.syncAndSendAlertBlocking(inst, tick);
+                count++;
+            }
+            if (callback != null) callback.onComplete(count);
+        });
+    }
+
+    private static WearProtocol.AlertTickPayload buildAlertTick(
+            ParsedMessage parsed,
+            int hapticPattern,
+            boolean shouldRepeat,
+            PrefsManager prefs
+    ) {
+        WearProtocol.AlertTickPayload tick = new WearProtocol.AlertTickPayload();
+        tick.conversationKey = parsed.conversationKey;
+        tick.packageName = parsed.packageName;
+        tick.appLabel = parsed.appLabel;
+        tick.conversationTitle = parsed.conversationTitle;
+        tick.senderName = parsed.senderName;
+        tick.messageText = parsed.messageText;
+        tick.attemptCount = 1;
+        tick.hapticPattern = hapticPattern;
+        tick.escalationLevel = parsed.isIncomingCall ? 3 : 1;
+        tick.notificationKind = parsed.notificationKind;
+        tick.canReply = parsed.canReply;
+        tick.canMarkRead = parsed.canMarkRead;
+        tick.isRepeating = shouldRepeat;
+        tick.isGroup = parsed.isGroup;
+        tick.isCall = parsed.isIncomingCall;
+        tick.canAnswerCall = parsed.answerCallIntent != null;
+        tick.canDeclineCall = parsed.declineCallIntent != null;
+        tick.autoTts = prefs.isRepeatMode() && prefs.isAutoTtsInRepeatEnabled();
+        tick.hasVoiceNote = parsed.hasVoiceNote;
+        tick.mediaBase64 = parsed.mediaBase64;
+        tick.avatarBase64 = parsed.avatarBase64;
+        tick.smallIconBase64 = parsed.smallIconBase64;
+        tick.appColor = parsed.appColor;
+        if (parsed.canReply) {
+            tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(parsed.packageName));
+        }
+        return tick;
+    }
+
     public static void cancelOriginalForConversation(String conversationKey) {
         BridgeNotificationListenerService inst = activeInstance;
         List<String> keys = ActionCache.consumeSbnKeysForConversation(conversationKey);
@@ -293,33 +404,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         AlertAudioHelper.playPhoneAlert(this, decision.phoneSoundMode, parsed.isIncomingCall);
 
         // Direct instant Wearable Data Layer alert + full sync
-        WearProtocol.AlertTickPayload tick = new WearProtocol.AlertTickPayload();
-        tick.conversationKey = parsed.conversationKey;
-        tick.packageName = parsed.packageName;
-        tick.appLabel = parsed.appLabel;
-        tick.conversationTitle = parsed.conversationTitle;
-        tick.senderName = parsed.senderName;
-        tick.messageText = parsed.messageText;
-        tick.attemptCount = 1;
-        tick.hapticPattern = decision.hapticPattern;
-        tick.escalationLevel = parsed.isIncomingCall ? 3 : 1;
-        tick.notificationKind = parsed.notificationKind;
-        tick.canReply = parsed.canReply;
-        tick.canMarkRead = parsed.canMarkRead;
-        tick.isRepeating = decision.shouldRepeat;
-        tick.isGroup = parsed.isGroup;
-        tick.isCall = parsed.isIncomingCall;
-        tick.canAnswerCall = parsed.answerCallIntent != null;
-        tick.canDeclineCall = parsed.declineCallIntent != null;
-        tick.autoTts = prefs.isRepeatMode() && prefs.isAutoTtsInRepeatEnabled();
-        tick.hasVoiceNote = parsed.hasVoiceNote;
-        tick.mediaBase64 = parsed.mediaBase64;
-        tick.avatarBase64 = parsed.avatarBase64;
-        tick.smallIconBase64 = parsed.smallIconBase64;
-        tick.appColor = parsed.appColor;
-        if (parsed.canReply) {
-            tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(parsed.packageName));
-        }
+        WearProtocol.AlertTickPayload tick = buildAlertTick(parsed, decision.hapticPattern, decision.shouldRepeat, prefs);
 
         WearDataLayerManager.syncAndSendAlertBlocking(this, tick);
 

@@ -63,6 +63,7 @@
     <string name="btn_sync_watch">Sync Watch</string>
     <string name="btn_test_watch_alert">Test Watch Alert &amp; Escalation</string>
     <string name="btn_test_watch_call">Test Incoming Call on Watch</string>
+    <string name="btn_test_replay_active">Replay Visible Phone Notifications</string>
 
     <!-- Permissions -->
     <string name="section_permissions">Setup &amp; Permissions</string>
@@ -223,6 +224,9 @@
     <string name="toast_alerts_stopped">All repeating alerts stopped</string>
     <string name="toast_test_alert_sent">Test alert started (repeats every 10s until dismissed)</string>
     <string name="toast_test_call_sent">Test incoming call sent to Galaxy Watch</string>
+    <string name="toast_replay_sent_fmt">Forwarded %1$d active notification(s) to Watch</string>
+    <string name="toast_replay_empty">No active notifications from enabled apps</string>
+    <string name="toast_replay_no_listener">Enable Notification Access permission first</string>
     <string name="toast_saved">Settings saved</string>
     <string name="toast_no_recent_contacts">No recent notifications captured yet</string>
 </resources>

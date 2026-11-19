@@ -276,6 +276,16 @@
                             android:text="@string/btn_test_watch_call"
                             android:textColor="#FFFFFF"
                             android:textSize="12sp" />
+
+                        <Button
+                            android:id="@+id/btn_test_replay_active"
+                            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:text="@string/btn_test_replay_active"
+                            android:textColor="@color/brand_primary"
+                            android:textSize="12sp" />
                     </LinearLayout>
                 </androidx.cardview.widget.CardView>
 

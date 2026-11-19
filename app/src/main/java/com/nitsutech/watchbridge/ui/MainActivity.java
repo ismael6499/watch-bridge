@@ -364,6 +364,19 @@ public class MainActivity extends AppCompatActivity {
             ProfileController.triggerTestCall(this);
             Toast.makeText(this, R.string.toast_test_call_sent, Toast.LENGTH_SHORT).show();
         });
+
+        findViewById(R.id.btn_test_replay_active).setOnClickListener(v ->
+                BridgeNotificationListenerService.replayActiveNotificationsNow(this, sentCount ->
+                        runOnUiThread(() -> {
+                            if (sentCount < 0) {
+                                Toast.makeText(this, R.string.toast_replay_no_listener, Toast.LENGTH_SHORT).show();
+                            } else if (sentCount == 0) {
+                                Toast.makeText(this, R.string.toast_replay_empty, Toast.LENGTH_SHORT).show();
+                            } else {
+                                Toast.makeText(this, getString(R.string.toast_replay_sent_fmt, sentCount), Toast.LENGTH_SHORT).show();
+                            }
+                            refreshUi();
+                        })));
     }
 
     private void setupTab2Listeners() {
