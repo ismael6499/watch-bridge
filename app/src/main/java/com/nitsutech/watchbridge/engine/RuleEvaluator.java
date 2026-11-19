@@ -18,6 +18,7 @@ public class RuleEvaluator {
         public boolean shouldBridge = false;
         public boolean shouldRepeat = false;
         public boolean sourceSilent = false;
+        public boolean silentOnWatch = false;
         public boolean coalescedByCooldown = false;
         public boolean suppressedPhoneInUse = false;
         public boolean suppressedAfterHours = false;
@@ -124,6 +125,14 @@ public class RuleEvaluator {
             return d;
         }
 
+        // Two-level Silent on Watch check (SenderRule > AppRule; VIP / Urgent / Calls win and stay loud!)
+        if (shouldSilenceOnWatch(appRule, matchedSender, d.isVip, d.isUrgentKeyword, msg.isIncomingCall, nowMs)) {
+            d.silentOnWatch = true;
+            d.shouldRepeat = false;
+            d.phoneSoundMode = 0;
+            return d;
+        }
+
         // Source chat is muted / silent (no sound & no vibration in WhatsApp/Teams):
         // Bridge normally to thread & watch without repeating and without vibrating the watch.
         if (msg.isSourceSilent && prefs.isRespectSourceMutedEnabled()
@@ -144,6 +153,39 @@ public class RuleEvaluator {
 
         CooldownTracker.recordAlertDispatched(msg.conversationKey, nowMs);
         return d;
+    }
+
+    public static boolean shouldSilenceOnWatch(
+            AppRuleEntity appRule,
+            SenderRuleEntity matchedSender,
+            boolean isVip,
+            boolean isUrgentKeyword,
+            boolean isIncomingCall,
+            long nowMs
+    ) {
+        if (isVip || isUrgentKeyword || isIncomingCall) {
+            return false;
+        }
+        if (matchedSender != null) {
+            if (matchedSender.silentWatchMode == 3) {
+                return false;
+            }
+            if (matchedSender.silentWatchMode == 1 || matchedSender.silentWatchMode == 2) {
+                return com.nitsutech.watchbridge.receiver.ScheduleAndTimerReceiver.isSilentRuleActiveNow(
+                        matchedSender.silentWatchMode,
+                        matchedSender.silentStartHour, matchedSender.silentStartMin,
+                        matchedSender.silentEndHour, matchedSender.silentEndMin,
+                        matchedSender.silentDaysMask, nowMs
+                );
+            }
+        }
+        if (appRule == null) return false;
+        return com.nitsutech.watchbridge.receiver.ScheduleAndTimerReceiver.isSilentRuleActiveNow(
+                appRule.silentWatchMode,
+                appRule.silentStartHour, appRule.silentStartMin,
+                appRule.silentEndHour, appRule.silentEndMin,
+                appRule.silentDaysMask, nowMs
+        );
     }
 
     private static SenderRuleEntity findMatchingSenderRule(ParsedMessage msg, List<SenderRuleEntity> rules) {

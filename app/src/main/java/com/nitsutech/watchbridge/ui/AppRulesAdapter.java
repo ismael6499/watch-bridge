@@ -63,7 +63,15 @@ public class AppRulesAdapter extends RecyclerView.Adapter<AppRulesAdapter.VH> {
                 item.groupRepeatEnabled ? item.groupRepeatIntervalSec + "s" : ctx.getString(R.string.once_label),
                 item.groupCooldownSec
         );
-        h.tvSummary.setText(directSummary + "\n" + groupSummary);
+        String silentSummary = "";
+        if (item.silentWatchMode == 1) {
+            silentSummary = "\n" + ctx.getString(R.string.badge_silent_24h);
+        } else if (item.silentWatchMode == 2) {
+            String st = String.format(java.util.Locale.US, "%02d:%02d", item.silentStartHour, item.silentStartMin);
+            String en = String.format(java.util.Locale.US, "%02d:%02d", item.silentEndHour, item.silentEndMin);
+            silentSummary = "\n" + ctx.getString(R.string.badge_silent_sched_fmt, st, en);
+        }
+        h.tvSummary.setText(directSummary + "\n" + groupSummary + silentSummary);
 
         h.swEnabled.setOnCheckedChangeListener(null);
         h.swEnabled.setChecked(item.enabled);

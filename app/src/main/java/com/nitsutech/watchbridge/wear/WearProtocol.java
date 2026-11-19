@@ -125,6 +125,7 @@ public class WearProtocol {
         public boolean canReply;
         public boolean canMarkRead;
         public boolean isRepeating;
+        public boolean silentOnWatch;
         public boolean isGroup;
         public boolean isCall;
         public boolean canAnswerCall;

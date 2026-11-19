@@ -4,6 +4,7 @@
     <string name="watch_escalation_channel">Escalado Despertador en Reloj</string>
     <string name="wear_channel_normal">Mensajes Recibidos</string>
     <string name="wear_channel_repeat">Alertas Repetitivas</string>
+    <string name="wear_channel_silent">Notificaciones Silenciosas</string>
     <string name="wear_me_label">Yo</string>
     <string name="wear_notif_reply">Responder</string>
     <string name="wear_notif_stop">Detener alerta</string>

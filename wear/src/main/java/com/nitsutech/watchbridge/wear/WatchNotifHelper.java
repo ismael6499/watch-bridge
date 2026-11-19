@@ -32,6 +32,7 @@ public class WatchNotifHelper {
     public static final String KEY_WATCH_TEXT_REPLY = "key_watch_text_reply";
     private static final String CHANNEL_WATCH_NORMAL = "watchbridge_watch_normal";
     private static final String CHANNEL_WATCH_REPEAT = "watchbridge_watch_repeat";
+    private static final String CHANNEL_WATCH_SILENT = "watchbridge_watch_silent";
     private static final String CHANNEL_WATCH_CALLS = "watchbridge_watch_calls";
     private static final int CALL_NOTIF_ID = 7701;
     private static final AtomicInteger NEXT_ID = new AtomicInteger(6000);
@@ -56,7 +57,9 @@ public class WatchNotifHelper {
         int notifId = NEXT_ID.incrementAndGet();
         ACTIVE_IDS.put(tick.conversationKey, notifId);
 
-        String channelId = tick.isRepeating ? CHANNEL_WATCH_REPEAT : CHANNEL_WATCH_NORMAL;
+        String channelId = tick.silentOnWatch
+                ? CHANNEL_WATCH_SILENT
+                : (tick.isRepeating ? CHANNEL_WATCH_REPEAT : CHANNEL_WATCH_NORMAL);
         String cleanTitle = !TextUtils.isEmpty(tick.conversationTitle) ? tick.conversationTitle : tick.senderName;
         boolean isChat = tick.notificationKind == WearProtocol.KIND_CHAT;
 
@@ -142,17 +145,18 @@ public class WatchNotifHelper {
                 .setSubText(tick.appLabel)
                 .setContentText(tick.messageText)
                 .setStyle(style)
-                .setPriority(NotificationCompat.PRIORITY_MAX)
+                .setPriority(tick.silentOnWatch ? NotificationCompat.PRIORITY_LOW : NotificationCompat.PRIORITY_MAX)
                 .setCategory(isChat
                         ? NotificationCompat.CATEGORY_MESSAGE : NotificationCompat.CATEGORY_EVENT)
+                .setSilent(tick.silentOnWatch)
                 .setAutoCancel(true)
-                .setOnlyAlertOnce(false)
+                .setOnlyAlertOnce(tick.silentOnWatch)
                 .setContentIntent(contentPi)
                 .setDeleteIntent(deletePi);
 
         applyOriginalBranding(builder, tick, avatarBmp);
 
-        if (tick.escalationLevel >= 3) {
+        if (!tick.silentOnWatch && tick.escalationLevel >= 3) {
             builder.setFullScreenIntent(contentPi, true);
         }
 
@@ -361,6 +365,16 @@ public class WatchNotifHelper {
                     NotificationManager.IMPORTANCE_HIGH
             );
             ch.enableVibration(true);
+            nm.createNotificationChannel(ch);
+        }
+        if (nm.getNotificationChannel(CHANNEL_WATCH_SILENT) == null) {
+            NotificationChannel ch = new NotificationChannel(
+                    CHANNEL_WATCH_SILENT,
+                    context.getString(R.string.wear_channel_silent),
+                    NotificationManager.IMPORTANCE_LOW
+            );
+            ch.enableVibration(false);
+            ch.setSound(null, null);
             nm.createNotificationChannel(ch);
         }
         if (nm.getNotificationChannel(CHANNEL_WATCH_CALLS) == null) {

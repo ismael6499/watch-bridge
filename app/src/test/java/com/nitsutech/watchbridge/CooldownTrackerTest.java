@@ -1,6 +1,10 @@
 package com.nitsutech.watchbridge;
 
+import com.nitsutech.watchbridge.data.AppDatabase;
+import com.nitsutech.watchbridge.data.AppRuleEntity;
+import com.nitsutech.watchbridge.data.SenderRuleEntity;
 import com.nitsutech.watchbridge.engine.CooldownTracker;
+import com.nitsutech.watchbridge.engine.RuleEvaluator;
 import com.nitsutech.watchbridge.receiver.ScheduleAndTimerReceiver;
 
 import org.junit.Test;
@@ -48,5 +52,51 @@ public class CooldownTrackerTest {
         // Daily (weekdaysOnly=false) includes Saturday night
         assertTrue(ScheduleAndTimerReceiver.isWithinAfterHoursWindow(
                 Calendar.SATURDAY, 20 * 60, 18, 0, 9, 0, false));
+    }
+
+    @Test
+    public void perDaySilentScheduleHandlesCustomDaysAndAllDay() {
+        int onlyTueAndFriMask = (1 << (Calendar.TUESDAY - 1)) | (1 << (Calendar.FRIDAY - 1));
+        assertTrue(ScheduleAndTimerReceiver.isSilentRuleActiveNow(
+                2, 9, 0, 18, 0, onlyTueAndFriMask, Calendar.TUESDAY, 10 * 60));
+        assertFalse(ScheduleAndTimerReceiver.isSilentRuleActiveNow(
+                2, 9, 0, 18, 0, onlyTueAndFriMask, Calendar.WEDNESDAY, 10 * 60));
+        assertTrue(ScheduleAndTimerReceiver.isSilentRuleActiveNow(
+                1, 0, 0, 0, 0, 0, Calendar.SUNDAY, 3 * 60));
+    }
+
+    @Test
+    public void silentOnWatchTwoLevelPrecedenceAndVipWins() {
+        AppRuleEntity app = new AppRuleEntity(
+                AppDatabase.PKG_TEAMS, "Microsoft Teams", true,
+                true, true, 12, 0,
+                true, false, 20, 0,
+                1, 0
+        );
+        app.silentWatchMode = 1; // App silent all day on watch even if phone sounds
+
+        // 1. Inherits AppRule silent all day when no SenderRule overrides it
+        assertTrue(RuleEvaluator.shouldSilenceOnWatch(app, null, false, false, false, 1_000L));
+
+        // 2. SenderRule with silentWatchMode=0 inherits AppRule silence
+        SenderRuleEntity chatRule = new SenderRuleEntity();
+        chatRule.senderOrChatName = "Tomas";
+        chatRule.packageFilter = AppDatabase.PKG_TEAMS;
+        chatRule.silentWatchMode = 0;
+        assertTrue(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, false, false, false, 1_000L));
+
+        // 3. SenderRule with silentWatchMode=3 explicitly overrides AppRule silence
+        chatRule.silentWatchMode = 3;
+        assertFalse(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, false, false, false, 2_000L));
+
+        // 4. SenderRule silent all day works even when AppRule is off
+        app.silentWatchMode = 0;
+        chatRule.silentWatchMode = 1;
+        assertTrue(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, false, false, false, 3_000L));
+
+        // 5. VIP / Urgent / Calls win over any silent rule
+        assertFalse(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, true, false, false, 3_000L));
+        assertFalse(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, false, true, false, 3_000L));
+        assertFalse(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, false, false, true, 3_000L));
     }
 }

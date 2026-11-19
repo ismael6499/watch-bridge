@@ -154,6 +154,11 @@ public class WatchWearListenerService extends WearableListenerService {
             handleIncomingCall(tick);
             return;
         }
+        if (tick.silentOnWatch) {
+            // Silent delivery: show notification card on Watch drawer without vibration, sound, TTS, or screen wake
+            WatchNotifHelper.postWatchNotification(this, tick, state);
+            return;
+        }
         WatchHapticHelper.playPattern(this, tick.hapticPattern, tick.escalationLevel);
         WatchNotifHelper.postWatchNotification(this, tick, state);
 

@@ -118,10 +118,13 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
                     db.chatMessageDao().insert(entity);
                 }
 
+                List<SenderRuleEntity> senderRules = db.senderRuleDao().getAllSync();
+                RuleEvaluator.Decision eval = RuleEvaluator.evaluate(inst, parsed, appRule, senderRules, prefs, parsed.timestamp);
                 WearProtocol.AlertTickPayload tick = buildAlertTick(
                         parsed,
                         parsed.isGroup ? 2 : appRule.hapticPattern,
                         false,
+                        eval.silentOnWatch,
                         prefs
                 );
                 WearDataLayerManager.syncAndSendAlertBlocking(inst, tick);
@@ -135,6 +138,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
             ParsedMessage parsed,
             int hapticPattern,
             boolean shouldRepeat,
+            boolean silentOnWatch,
             PrefsManager prefs
     ) {
         WearProtocol.AlertTickPayload tick = new WearProtocol.AlertTickPayload();
@@ -146,16 +150,17 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         tick.messageText = parsed.messageText;
         tick.attemptCount = 1;
         tick.hapticPattern = hapticPattern;
-        tick.escalationLevel = parsed.isIncomingCall ? 3 : 1;
+        tick.escalationLevel = (parsed.isIncomingCall && !silentOnWatch) ? 3 : 1;
         tick.notificationKind = parsed.notificationKind;
         tick.canReply = parsed.canReply;
         tick.canMarkRead = parsed.canMarkRead;
-        tick.isRepeating = shouldRepeat;
+        tick.isRepeating = shouldRepeat && !silentOnWatch;
+        tick.silentOnWatch = silentOnWatch;
         tick.isGroup = parsed.isGroup;
         tick.isCall = parsed.isIncomingCall;
         tick.canAnswerCall = parsed.answerCallIntent != null;
         tick.canDeclineCall = parsed.declineCallIntent != null;
-        tick.autoTts = prefs.isRepeatMode() && prefs.isAutoTtsInRepeatEnabled();
+        tick.autoTts = !silentOnWatch && prefs.isRepeatMode() && prefs.isAutoTtsInRepeatEnabled();
         tick.hasVoiceNote = parsed.hasVoiceNote;
         tick.mediaBase64 = parsed.mediaBase64;
         tick.avatarBase64 = parsed.avatarBase64;
@@ -394,22 +399,26 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
                     parsed.conversationTitle,
                     parsed.isGroup,
                     false,
-                    false,
-                    decision.isUrgentKeyword || parsed.isIncomingCall,
+                    decision.silentOnWatch,
+                    !decision.silentOnWatch && (decision.isUrgentKeyword || parsed.isIncomingCall),
+                    decision.silentOnWatch,
                     thread,
                     prefs
             );
         }
 
-        // Phone sound/vibrate if configured (default 0 = Watch Only so phone doesn't double-buzz)
-        AlertAudioHelper.playPhoneAlert(this, decision.phoneSoundMode, parsed.isIncomingCall);
+        // Phone sound/vibrate if configured (skipped when silentOnWatch)
+        if (!decision.silentOnWatch) {
+            AlertAudioHelper.playPhoneAlert(this, decision.phoneSoundMode, parsed.isIncomingCall);
+        }
 
         // Direct instant Wearable Data Layer alert + full sync
-        WearProtocol.AlertTickPayload tick = buildAlertTick(parsed, decision.hapticPattern, decision.shouldRepeat, prefs);
+        WearProtocol.AlertTickPayload tick = buildAlertTick(
+                parsed, decision.hapticPattern, decision.shouldRepeat, decision.silentOnWatch, prefs);
 
         WearDataLayerManager.syncAndSendAlertBlocking(this, tick);
 
-        if (decision.shouldRepeat) {
+        if (decision.shouldRepeat && !decision.silentOnWatch) {
             PersistentRepeatForegroundService.enqueueRepeat(
                     this,
                     parsed.conversationKey,

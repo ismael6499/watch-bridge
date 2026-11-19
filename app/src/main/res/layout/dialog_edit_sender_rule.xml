@@ -59,5 +59,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/dlg_alarm_override" />
+
+        <include layout="@layout/include_silent_watch_schedule" />
     </LinearLayout>
 </ScrollView>

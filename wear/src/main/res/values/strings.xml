@@ -4,6 +4,7 @@
     <string name="watch_escalation_channel">Watch Wake-Up Escalation</string>
     <string name="wear_channel_normal">Bridged Messages</string>
     <string name="wear_channel_repeat">Repeating Alerts</string>
+    <string name="wear_channel_silent">Silent Watch Notifications</string>
     <string name="wear_me_label">Me</string>
     <string name="wear_notif_reply">Reply</string>
     <string name="wear_notif_stop">Stop Alert</string>

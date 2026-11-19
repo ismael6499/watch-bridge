@@ -95,5 +95,7 @@
             android:id="@+id/sp_dlg_haptic_pattern"
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
+
+        <include layout="@layout/include_silent_watch_schedule" />
     </LinearLayout>
 </ScrollView>

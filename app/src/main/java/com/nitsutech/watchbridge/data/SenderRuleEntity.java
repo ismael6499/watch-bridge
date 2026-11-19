@@ -27,6 +27,14 @@ public class SenderRuleEntity {
     public boolean isVip = false;
     public boolean phoneAlarmOverride = false;
 
+    // Watch Silent Mode: 0 = Follow App / Off, 1 = All Day Silent, 2 = Scheduled Silent, 3 = Never Silence (Override App)
+    public int silentWatchMode = 0;
+    public int silentStartHour = 9;
+    public int silentStartMin = 0;
+    public int silentEndHour = 18;
+    public int silentEndMin = 0;
+    public int silentDaysMask = 127; // Bitmask (Calendar.DAY_OF_WEEK - 1): 127 = All 7 days
+
     public SenderRuleEntity() {
     }
 }

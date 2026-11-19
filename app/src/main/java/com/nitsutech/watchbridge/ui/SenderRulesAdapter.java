@@ -63,7 +63,18 @@ public class SenderRulesAdapter extends RecyclerView.Adapter<SenderRulesAdapter.
                 ? ctx.getString(R.string.rule_action_repeat_fmt, r.repeatIntervalSec)
                 : (r.actionMode == 1 ? ctx.getString(R.string.rule_action_once) : ctx.getString(R.string.rule_action_mute));
 
-        h.tvDetails.setText(appScope + " • " + chatType + " • " + action + " • " + ctx.getString(R.string.cooling_fmt, r.cooldownSec));
+        String silentTag = "";
+        if (r.silentWatchMode == 1) {
+            silentTag = " • " + ctx.getString(R.string.badge_silent_24h);
+        } else if (r.silentWatchMode == 2) {
+            String st = String.format(java.util.Locale.US, "%02d:%02d", r.silentStartHour, r.silentStartMin);
+            String en = String.format(java.util.Locale.US, "%02d:%02d", r.silentEndHour, r.silentEndMin);
+            silentTag = " • " + ctx.getString(R.string.badge_silent_sched_fmt, st, en);
+        } else if (r.silentWatchMode == 3) {
+            silentTag = " • " + ctx.getString(R.string.badge_silent_override);
+        }
+
+        h.tvDetails.setText(appScope + " • " + chatType + " • " + action + " • " + ctx.getString(R.string.cooling_fmt, r.cooldownSec) + silentTag);
         h.itemView.setOnClickListener(v -> listener.onEditRule(r));
         h.btnDelete.setOnClickListener(v -> listener.onDeleteRule(r));
     }

@@ -889,6 +889,118 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
+    private static class SilentWatchUiHelper {
+        Spinner spMode;
+        int startHour;
+        int startMin;
+        int endHour;
+        int endMin;
+        CheckBox[] dayBoxes;
+        int[] dayConstants;
+
+        int getSelectedMode() {
+            return Math.max(0, spMode.getSelectedItemPosition());
+        }
+
+        int readDaysMask() {
+            int mask = 0;
+            for (int i = 0; i < dayBoxes.length; i++) {
+                if (dayBoxes[i].isChecked()) {
+                    mask |= (1 << (dayConstants[i] - 1));
+                }
+            }
+            return mask;
+        }
+    }
+
+    private SilentWatchUiHelper bindSilentWatchUi(
+            View root,
+            boolean isSenderRule,
+            int mode,
+            int startH, int startM,
+            int endH, int endM,
+            int daysMask
+    ) {
+        SilentWatchUiHelper helper = new SilentWatchUiHelper();
+        helper.spMode = root.findViewById(R.id.sp_dlg_silent_mode);
+        helper.startHour = startH;
+        helper.startMin = startM;
+        helper.endHour = endH;
+        helper.endMin = endM;
+
+        View schedBox = root.findViewById(R.id.ll_dlg_silent_schedule);
+        Button btnStart = root.findViewById(R.id.btn_dlg_silent_start);
+        Button btnEnd = root.findViewById(R.id.btn_dlg_silent_end);
+
+        helper.dayConstants = new int[]{
+                java.util.Calendar.MONDAY, java.util.Calendar.TUESDAY, java.util.Calendar.WEDNESDAY,
+                java.util.Calendar.THURSDAY, java.util.Calendar.FRIDAY, java.util.Calendar.SATURDAY,
+                java.util.Calendar.SUNDAY
+        };
+        helper.dayBoxes = new CheckBox[]{
+                root.findViewById(R.id.cb_day_mon),
+                root.findViewById(R.id.cb_day_tue),
+                root.findViewById(R.id.cb_day_wed),
+                root.findViewById(R.id.cb_day_thu),
+                root.findViewById(R.id.cb_day_fri),
+                root.findViewById(R.id.cb_day_sat),
+                root.findViewById(R.id.cb_day_sun)
+        };
+        int effMask = daysMask == 0 ? ScheduleAndTimerReceiver.DAYS_ALL : daysMask;
+        for (int i = 0; i < helper.dayBoxes.length; i++) {
+            int bit = 1 << (helper.dayConstants[i] - 1);
+            helper.dayBoxes[i].setChecked((effMask & bit) != 0);
+        }
+
+        Runnable refreshTimes = () -> {
+            btnStart.setText(getString(R.string.dlg_ah_start_btn_fmt,
+                    String.format(Locale.US, "%02d:%02d", helper.startHour, helper.startMin)));
+            btnEnd.setText(getString(R.string.dlg_ah_end_btn_fmt,
+                    String.format(Locale.US, "%02d:%02d", helper.endHour, helper.endMin)));
+        };
+        refreshTimes.run();
+
+        btnStart.setOnClickListener(v -> new TimePickerDialog(this, (picker, h, m) -> {
+            helper.startHour = h;
+            helper.startMin = m;
+            refreshTimes.run();
+        }, helper.startHour, helper.startMin, true).show());
+
+        btnEnd.setOnClickListener(v -> new TimePickerDialog(this, (picker, h, m) -> {
+            helper.endHour = h;
+            helper.endMin = m;
+            refreshTimes.run();
+        }, helper.endHour, helper.endMin, true).show());
+
+        String[] opts = isSenderRule
+                ? new String[]{
+                        getString(R.string.silent_mode_follow_app),
+                        getString(R.string.silent_mode_all_day),
+                        getString(R.string.silent_mode_schedule),
+                        getString(R.string.silent_mode_never_override)
+                }
+                : new String[]{
+                        getString(R.string.silent_mode_off),
+                        getString(R.string.silent_mode_all_day),
+                        getString(R.string.silent_mode_schedule)
+                };
+        helper.spMode.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, opts));
+        int safeMode = Math.min(opts.length - 1, Math.max(0, mode));
+        helper.spMode.setSelection(safeMode);
+        schedBox.setVisibility(safeMode == 2 ? View.VISIBLE : View.GONE);
+        helper.spMode.setOnItemSelectedListener(new android.widget.AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(android.widget.AdapterView<?> parent, View view, int pos, long id) {
+                schedBox.setVisibility(pos == 2 ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void onNothingSelected(android.widget.AdapterView<?> parent) {
+            }
+        });
+        return helper;
+    }
+
     private void showEditAppRuleDialog(AppRuleEntity rule) {
         View v = LayoutInflater.from(this).inflate(R.layout.dialog_edit_app_rule, null);
         SwitchMaterial swDirectEnabled = v.findViewById(R.id.sw_dlg_direct_enabled);
@@ -903,6 +1015,13 @@ public class MainActivity extends AppCompatActivity {
 
         Spinner spSoundMode = v.findViewById(R.id.sp_dlg_phone_sound);
         Spinner spHaptic = v.findViewById(R.id.sp_dlg_haptic_pattern);
+        SilentWatchUiHelper silentUi = bindSilentWatchUi(
+                v, false,
+                rule.silentWatchMode,
+                rule.silentStartHour, rule.silentStartMin,
+                rule.silentEndHour, rule.silentEndMin,
+                rule.silentDaysMask
+        );
 
         swDirectEnabled.setChecked(rule.directEnabled);
         swDirectRepeat.setChecked(rule.directRepeatEnabled);
@@ -945,6 +1064,12 @@ public class MainActivity extends AppCompatActivity {
 
                     rule.phoneSoundMode = spSoundMode.getSelectedItemPosition();
                     rule.hapticPattern = spHaptic.getSelectedItemPosition();
+                    rule.silentWatchMode = silentUi.getSelectedMode();
+                    rule.silentStartHour = silentUi.startHour;
+                    rule.silentStartMin = silentUi.startMin;
+                    rule.silentEndHour = silentUi.endHour;
+                    rule.silentEndMin = silentUi.endMin;
+                    rule.silentDaysMask = silentUi.readDaysMask();
 
                     db.executor().execute(() -> {
                         db.appRuleDao().upsert(rule);
@@ -1002,6 +1127,13 @@ public class MainActivity extends AppCompatActivity {
         etCooldownSec.setText(String.valueOf(target.cooldownSec));
         cbVip.setChecked(target.isVip);
         cbPhoneAlarm.setChecked(target.phoneAlarmOverride);
+        SilentWatchUiHelper silentUi = bindSilentWatchUi(
+                v, true,
+                target.silentWatchMode,
+                target.silentStartHour, target.silentStartMin,
+                target.silentEndHour, target.silentEndMin,
+                target.silentDaysMask
+        );
 
         new AlertDialog.Builder(this)
                 .setTitle(existing == null ? R.string.dlg_new_sender_rule : R.string.dlg_edit_sender_rule)
@@ -1017,6 +1149,12 @@ public class MainActivity extends AppCompatActivity {
                     target.cooldownSec = parseNonNegInt(etCooldownSec.getText().toString(), 0);
                     target.isVip = cbVip.isChecked();
                     target.phoneAlarmOverride = cbPhoneAlarm.isChecked();
+                    target.silentWatchMode = silentUi.getSelectedMode();
+                    target.silentStartHour = silentUi.startHour;
+                    target.silentStartMin = silentUi.startMin;
+                    target.silentEndHour = silentUi.endHour;
+                    target.silentEndMin = silentUi.endMin;
+                    target.silentDaysMask = silentUi.readDaysMask();
 
                     db.executor().execute(() -> {
                         db.senderRuleDao().upsert(target);

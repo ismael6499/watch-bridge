@@ -113,6 +113,23 @@
     <string name="haptic_wa_long_short">WhatsApp Largo-Corto</string>
     <string name="haptic_group_short">Grupo Toque Corto</string>
     <string name="haptic_urgent_wake">Ritmo Despertador Urgente</string>
+    <string name="dlg_silent_watch_section">Silencio en Reloj (llega sin vibrar aunque vibre el celular)</string>
+    <string name="silent_mode_off">Avisar Normal</string>
+    <string name="silent_mode_follow_app">Seguir Regla de App / Normal</string>
+    <string name="silent_mode_all_day">Silencioso Todo el Día en Reloj</string>
+    <string name="silent_mode_schedule">Silencioso por Horario y Días</string>
+    <string name="silent_mode_never_override">Avisar Siempre (Ignorar silencio de App)</string>
+    <string name="dlg_silent_days_label">Días de la Semana:</string>
+    <string name="day_mon">L</string>
+    <string name="day_tue">M</string>
+    <string name="day_wed">X</string>
+    <string name="day_thu">J</string>
+    <string name="day_fri">V</string>
+    <string name="day_sat">S</string>
+    <string name="day_sun">D</string>
+    <string name="badge_silent_24h">🔕 Reloj Silencio 24h</string>
+    <string name="badge_silent_sched_fmt">🔕 Reloj %1$s–%2$s</string>
+    <string name="badge_silent_override">🔔 Excepción (Suena siempre)</string>
 
     <!-- Sender Rules & Keywords Tab -->
     <string name="btn_new_sender_rule">+ Nueva Regla Chat/Persona</string>

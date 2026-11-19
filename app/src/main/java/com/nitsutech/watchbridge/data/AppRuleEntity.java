@@ -33,6 +33,14 @@ public class AppRuleEntity {
     // 0 = Teams Double Pulse, 1 = WhatsApp Long-Short, 2 = Group Short, 3 = Urgent Escalating
     public int hapticPattern = 0;
 
+    // Watch Silent Mode: 0 = Off, 1 = All Day Silent on Watch, 2 = Scheduled Silent on Watch
+    public int silentWatchMode = 0;
+    public int silentStartHour = 9;
+    public int silentStartMin = 0;
+    public int silentEndHour = 18;
+    public int silentEndMin = 0;
+    public int silentDaysMask = 127; // Bitmask (Calendar.DAY_OF_WEEK - 1): 127 = All 7 days
+
     public AppRuleEntity() {
     }
 

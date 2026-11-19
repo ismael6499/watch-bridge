@@ -58,13 +58,69 @@ public class ScheduleAndTimerReceiver extends BroadcastReceiver {
         }
     }
 
+    public static final int DAYS_ALL = 127;       // Sun..Sat (bits 0..6)
+    public static final int DAYS_WEEKDAYS = 62;   // Mon..Fri (bits 1..5)
+
     private static boolean shouldRunDay(int dayOfWeek, boolean weekdaysOnly) {
         if (!weekdaysOnly) return true;
         return dayOfWeek >= Calendar.MONDAY && dayOfWeek <= Calendar.FRIDAY;
     }
 
+    private static boolean matchesDaysMask(int dayOfWeek, int daysMask) {
+        int bit = 1 << (dayOfWeek - 1);
+        return (daysMask & bit) != 0;
+    }
+
     private boolean shouldRunToday(PrefsManager prefs) {
         return shouldRunDay(Calendar.getInstance().get(Calendar.DAY_OF_WEEK), prefs.isAfterHoursWeekdaysOnly());
+    }
+
+    public static boolean isWithinDaysWindow(
+            int nowDow, int nowMinutesOfDay,
+            int startHour, int startMin,
+            int endHour, int endMin,
+            int daysMask
+    ) {
+        if (daysMask == 0) return false;
+        int startTotal = startHour * 60 + startMin;
+        int endTotal = endHour * 60 + endMin;
+        if (startTotal == endTotal) {
+            // Equal start/end means all 24h for selected days
+            return matchesDaysMask(nowDow, daysMask);
+        }
+        if (startTotal < endTotal) {
+            return matchesDaysMask(nowDow, daysMask)
+                    && nowMinutesOfDay >= startTotal
+                    && nowMinutesOfDay < endTotal;
+        }
+        if (nowMinutesOfDay >= startTotal && matchesDaysMask(nowDow, daysMask)) {
+            return true;
+        }
+        int prevDow = nowDow == Calendar.SUNDAY ? Calendar.SATURDAY : nowDow - 1;
+        return nowMinutesOfDay < endTotal && matchesDaysMask(prevDow, daysMask);
+    }
+
+    public static boolean isSilentRuleActiveNow(
+            int silentMode, int startHour, int startMin, int endHour, int endMin, int daysMask,
+            int nowDow, int nowMinutesOfDay
+    ) {
+        if (silentMode == 1) return true;
+        if (silentMode == 2) {
+            return isWithinDaysWindow(nowDow, nowMinutesOfDay, startHour, startMin, endHour, endMin, daysMask);
+        }
+        return false;
+    }
+
+    public static boolean isSilentRuleActiveNow(
+            int silentMode, int startHour, int startMin, int endHour, int endMin, int daysMask,
+            long nowMs
+    ) {
+        if (silentMode == 1) return true;
+        if (silentMode != 2) return false;
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(nowMs);
+        int nowMin = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE);
+        return isWithinDaysWindow(cal.get(Calendar.DAY_OF_WEEK), nowMin, startHour, startMin, endHour, endMin, daysMask);
     }
 
     public static boolean isWithinAfterHoursWindow(
@@ -78,17 +134,10 @@ public class ScheduleAndTimerReceiver extends BroadcastReceiver {
         if (startTotal == endTotal) {
             return false;
         }
-        if (startTotal < endTotal) {
-            return shouldRunDay(nowDow, weekdaysOnly)
-                    && nowMinutesOfDay >= startTotal
-                    && nowMinutesOfDay < endTotal;
-        }
-        // Overnight window (e.g., 18:00 -> 09:00): evening matches today, morning matches yesterday's start day
-        if (nowMinutesOfDay >= startTotal && shouldRunDay(nowDow, weekdaysOnly)) {
-            return true;
-        }
-        int prevDow = nowDow == Calendar.SUNDAY ? Calendar.SATURDAY : nowDow - 1;
-        return nowMinutesOfDay < endTotal && shouldRunDay(prevDow, weekdaysOnly);
+        return isWithinDaysWindow(
+                nowDow, nowMinutesOfDay, startHour, startMin, endHour, endMin,
+                weekdaysOnly ? DAYS_WEEKDAYS : DAYS_ALL
+        );
     }
 
     public static void evaluateNowAndReschedule(Context context, PrefsManager prefs) {
