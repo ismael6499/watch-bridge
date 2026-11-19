@@ -14,6 +14,7 @@ import android.util.Base64;
 import androidx.core.app.NotificationCompat;
 import androidx.core.app.Person;
 import androidx.core.app.RemoteInput;
+import androidx.core.graphics.drawable.IconCompat;
 
 import com.nitsutech.watchbridge.R;
 import com.nitsutech.watchbridge.receiver.WatchNotifActionReceiver;
@@ -59,6 +60,9 @@ public class WatchNotifHelper {
         String cleanTitle = !TextUtils.isEmpty(tick.conversationTitle) ? tick.conversationTitle : tick.senderName;
         boolean isChat = tick.notificationKind == WearProtocol.KIND_CHAT;
 
+        Bitmap avatarBmp = decodeBase64Bitmap(tick.avatarBase64);
+        IconCompat avatarIcon = avatarBmp != null ? IconCompat.createWithBitmap(avatarBmp) : null;
+
         NotificationCompat.Style style;
         if (isChat) {
             Person me = new Person.Builder().setName(context.getString(R.string.wear_me_label)).build();
@@ -74,7 +78,10 @@ public class WatchNotifHelper {
                 for (WearProtocol.ConversationDto c : state.conversations) {
                     if (tick.conversationKey.equals(c.conversationKey) && c.messages != null && !c.messages.isEmpty()) {
                         for (WearProtocol.MessageDto m : c.messages) {
-                            Person p = m.isOutgoing ? me : new Person.Builder().setName(m.senderName).build();
+                            Person p = m.isOutgoing ? me : new Person.Builder()
+                                    .setName(m.senderName)
+                                    .setIcon(avatarIcon)
+                                    .build();
                             msgStyle.addMessage(m.messageText, m.timestamp, p);
                             lastAddedText = m.messageText != null ? m.messageText : "";
                         }
@@ -84,7 +91,10 @@ public class WatchNotifHelper {
                 }
             }
             if (!addedHistory || (!TextUtils.isEmpty(tick.messageText) && !tick.messageText.equals(lastAddedText))) {
-                Person p = new Person.Builder().setName(tick.senderName).build();
+                Person p = new Person.Builder()
+                        .setName(tick.senderName)
+                        .setIcon(avatarIcon)
+                        .build();
                 msgStyle.addMessage(tick.messageText, System.currentTimeMillis(), p);
             }
             style = msgStyle;
@@ -128,7 +138,6 @@ public class WatchNotifHelper {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channelId)
-                .setSmallIcon(R.drawable.ic_watch_logo)
                 .setContentTitle(cleanTitle)
                 .setSubText(tick.appLabel)
                 .setContentText(tick.messageText)
@@ -140,6 +149,8 @@ public class WatchNotifHelper {
                 .setOnlyAlertOnce(false)
                 .setContentIntent(contentPi)
                 .setDeleteIntent(deletePi);
+
+        applyOriginalBranding(builder, tick, avatarBmp);
 
         if (tick.escalationLevel >= 3) {
             builder.setFullScreenIntent(contentPi, true);
@@ -251,7 +262,6 @@ public class WatchNotifHelper {
         );
 
         NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_WATCH_CALLS)
-                .setSmallIcon(R.drawable.ic_watch_logo)
                 .setContentTitle(caller)
                 .setSubText(tick.appLabel)
                 .setContentText(context.getString(R.string.wear_call_incoming))
@@ -262,6 +272,8 @@ public class WatchNotifHelper {
                 .setOnlyAlertOnce(false)
                 .setFullScreenIntent(fullPi, true)
                 .setContentIntent(fullPi);
+
+        applyOriginalBranding(builder, tick, decodeBase64Bitmap(tick.avatarBase64));
 
         if (tick.canAnswerCall) {
             Intent ansIntent = new Intent(context, WatchNotifActionReceiver.class);
@@ -340,6 +352,46 @@ public class WatchNotifHelper {
             );
             ch.enableVibration(true);
             nm.createNotificationChannel(ch);
+        }
+    }
+
+    private static void applyOriginalBranding(NotificationCompat.Builder builder,
+                                            WearProtocol.AlertTickPayload tick,
+                                            Bitmap avatarBmp) {
+        Bitmap smallBmp = decodeBase64Bitmap(tick.smallIconBase64);
+        if (smallBmp != null) {
+            builder.setSmallIcon(IconCompat.createWithBitmap(smallBmp));
+        } else if ("com.whatsapp".equals(tick.packageName) || "com.whatsapp.w4b".equals(tick.packageName)) {
+            builder.setSmallIcon(R.drawable.ic_app_whatsapp);
+        } else if ("com.microsoft.teams".equals(tick.packageName)) {
+            builder.setSmallIcon(R.drawable.ic_app_teams);
+        } else {
+            builder.setSmallIcon(R.drawable.ic_watch_logo);
+        }
+
+        int accent = tick.appColor;
+        if (accent == 0) {
+            if ("com.whatsapp".equals(tick.packageName) || "com.whatsapp.w4b".equals(tick.packageName)) {
+                accent = 0xFF21C063;
+            } else if ("com.microsoft.teams".equals(tick.packageName)) {
+                accent = 0xFF7F85F5;
+            }
+        }
+        if (accent != 0) {
+            builder.setColor(accent);
+        }
+        if (avatarBmp != null) {
+            builder.setLargeIcon(avatarBmp);
+        }
+    }
+
+    private static Bitmap decodeBase64Bitmap(String b64) {
+        if (TextUtils.isEmpty(b64)) return null;
+        try {
+            byte[] b = Base64.decode(b64, Base64.DEFAULT);
+            return BitmapFactory.decodeByteArray(b, 0, b.length);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

@@ -23,6 +23,9 @@ public class ActionCache {
         public PendingIntent answerCallIntent;
         public PendingIntent declineCallIntent;
         public Bitmap avatarBitmap;
+        public String avatarBase64 = "";
+        public String smallIconBase64 = "";
+        public int appColor = 0;
         public String originalNotificationKey;
         public String packageName;
         public String appLabel;
@@ -37,6 +40,7 @@ public class ActionCache {
 
     private static final ConcurrentHashMap<String, CachedActions> CACHE = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, String> SBN_TO_CONV = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, java.util.Set<String>> CONV_TO_SBNS = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Boolean> ACTIVE_CALL_SBN_HAD_ANSWER = new ConcurrentHashMap<>();
     private static final Map<String, String> DEDUP_HASH = Collections.synchronizedMap(
             new LinkedHashMap<String, String>(64, 0.75f, true) {
@@ -68,9 +72,20 @@ public class ActionCache {
         if (msg.senderAvatar != null) {
             entry.avatarBitmap = msg.senderAvatar;
         }
+        if (msg.avatarBase64 != null && !msg.avatarBase64.isEmpty()) {
+            entry.avatarBase64 = msg.avatarBase64;
+        }
+        if (msg.smallIconBase64 != null && !msg.smallIconBase64.isEmpty()) {
+            entry.smallIconBase64 = msg.smallIconBase64;
+        }
+        if (msg.appColor != 0) {
+            entry.appColor = msg.appColor;
+        }
         if (!msg.notificationKey.isEmpty()) {
             entry.originalNotificationKey = msg.notificationKey;
             SBN_TO_CONV.put(msg.notificationKey, msg.conversationKey);
+            CONV_TO_SBNS.computeIfAbsent(msg.conversationKey,
+                    k -> Collections.synchronizedSet(new java.util.HashSet<>())).add(msg.notificationKey);
         }
         entry.packageName = msg.packageName;
         entry.appLabel = msg.appLabel;
@@ -89,7 +104,39 @@ public class ActionCache {
     }
 
     public static String getConversationKeyForSbnKey(String sbnKey) {
-        return sbnKey == null ? null : SBN_TO_CONV.remove(sbnKey);
+        if (sbnKey == null) return null;
+        String conv = SBN_TO_CONV.remove(sbnKey);
+        if (conv != null) {
+            java.util.Set<String> set = CONV_TO_SBNS.get(conv);
+            if (set != null) {
+                set.remove(sbnKey);
+            }
+        }
+        return conv;
+    }
+
+    public static List<String> consumeSbnKeysForConversation(String convKey) {
+        List<String> out = new ArrayList<>();
+        if (convKey == null) return out;
+        java.util.Set<String> set = CONV_TO_SBNS.remove(convKey);
+        if (set != null) {
+            synchronized (set) {
+                out.addAll(set);
+            }
+            for (String k : out) {
+                SBN_TO_CONV.remove(k);
+                ACTIVE_CALL_SBN_HAD_ANSWER.remove(k);
+            }
+        }
+        CachedActions cached = CACHE.get(convKey);
+        if (cached != null && cached.originalNotificationKey != null
+                && !cached.originalNotificationKey.isEmpty()
+                && !out.contains(cached.originalNotificationKey)) {
+            out.add(cached.originalNotificationKey);
+            SBN_TO_CONV.remove(cached.originalNotificationKey);
+            ACTIVE_CALL_SBN_HAD_ANSWER.remove(cached.originalNotificationKey);
+        }
+        return out;
     }
 
     public static void markCallActive(String sbnKey, boolean hadAnswerIntent) {

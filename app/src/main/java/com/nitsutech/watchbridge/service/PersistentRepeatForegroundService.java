@@ -374,6 +374,13 @@ public class PersistentRepeatForegroundService extends Service {
         tick.autoTts = escalated && prefs.isAutoTtsInRepeatEnabled();
         tick.hasVoiceNote = session.hasVoiceNote;
         tick.mediaBase64 = session.mediaBase64;
+        com.nitsutech.watchbridge.engine.ActionCache.CachedActions cached =
+                com.nitsutech.watchbridge.engine.ActionCache.get(session.conversationKey);
+        if (cached != null) {
+            tick.avatarBase64 = cached.avatarBase64;
+            tick.smallIconBase64 = cached.smallIconBase64;
+            tick.appColor = cached.appColor;
+        }
         if (lastItem.canReply) {
             tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(session.packageName));
         }

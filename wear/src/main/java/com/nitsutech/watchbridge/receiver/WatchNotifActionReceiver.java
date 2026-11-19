@@ -63,10 +63,8 @@ public class WatchNotifActionReceiver extends BroadcastReceiver {
             }
         } else if (ACTION_DISMISS_WATCH_NOTIF.equals(action)) {
             if (convKey != null) {
-                WearProtocol.WatchCommand cmd = new WearProtocol.WatchCommand();
-                cmd.action = WearProtocol.CMD_STOP_CHAT_ALERT;
-                cmd.conversationKey = convKey;
-                WatchDataClient.sendCommandAsync(context, cmd);
+                WatchNotifHelper.cancelForChat(context, convKey);
+                WatchDataClient.dismissChat(context, convKey);
             }
         } else if (ACTION_WATCH_ANSWER_CALL.equals(action)) {
             WatchHapticHelper.stopCallRingLoop();

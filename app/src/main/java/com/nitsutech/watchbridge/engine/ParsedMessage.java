@@ -28,6 +28,9 @@ public class ParsedMessage {
 
     public String mediaPath = "";
     public String mediaBase64 = "";
+    public String avatarBase64 = "";
+    public String smallIconBase64 = "";
+    public int appColor = 0;
     public Bitmap senderAvatar = null;
 
     public Notification.Action replyAction = null;

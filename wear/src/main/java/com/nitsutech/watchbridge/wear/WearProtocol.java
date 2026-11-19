@@ -130,6 +130,9 @@ public class WearProtocol {
         public boolean autoTts;
         public boolean hasVoiceNote;
         public String mediaBase64;
+        public String avatarBase64;
+        public String smallIconBase64;
+        public int appColor;
         public List<String> quickReplies = new ArrayList<>();
     }
 

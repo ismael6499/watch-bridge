@@ -179,6 +179,7 @@ public class ProfileController {
         }
         PersistentRepeatForegroundService.stopChatSession(context, conversationKey);
         ProxyNotificationHelper.cancelNotificationForChat(context, conversationKey);
+        BridgeNotificationListenerService.cancelOriginalForConversation(conversationKey);
         AppDatabase db = AppDatabase.getInstance(context);
         db.executor().execute(() -> {
             db.chatMessageDao().markConversationRead(conversationKey);
@@ -192,6 +193,7 @@ public class ProfileController {
         if (TextUtils.isEmpty(conversationKey)) return;
         PersistentRepeatForegroundService.stopChatSession(context, conversationKey);
         ProxyNotificationHelper.cancelNotificationForChat(context, conversationKey);
+        BridgeNotificationListenerService.cancelOriginalForConversation(conversationKey);
         AppDatabase db = AppDatabase.getInstance(context);
         db.executor().execute(() -> {
             db.chatMessageDao().dismissConversation(conversationKey);

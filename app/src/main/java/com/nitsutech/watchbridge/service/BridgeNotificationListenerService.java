@@ -26,6 +26,48 @@ import java.util.List;
  */
 public class BridgeNotificationListenerService extends NotificationListenerService {
 
+    private static volatile BridgeNotificationListenerService activeInstance;
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        activeInstance = this;
+    }
+
+    @Override
+    public void onListenerConnected() {
+        super.onListenerConnected();
+        activeInstance = this;
+    }
+
+    @Override
+    public void onListenerDisconnected() {
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
+        super.onListenerDisconnected();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (activeInstance == this) {
+            activeInstance = null;
+        }
+        super.onDestroy();
+    }
+
+    public static void cancelOriginalForConversation(String conversationKey) {
+        BridgeNotificationListenerService inst = activeInstance;
+        List<String> keys = ActionCache.consumeSbnKeysForConversation(conversationKey);
+        if (inst == null || keys.isEmpty()) return;
+        for (String key : keys) {
+            try {
+                inst.cancelNotification(key);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     @Override
     public void onNotificationPosted(StatusBarNotification sbn, RankingMap rankingMap) {
         handlePosted(sbn, rankingMap);
@@ -272,6 +314,9 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         tick.autoTts = prefs.isRepeatMode() && prefs.isAutoTtsInRepeatEnabled();
         tick.hasVoiceNote = parsed.hasVoiceNote;
         tick.mediaBase64 = parsed.mediaBase64;
+        tick.avatarBase64 = parsed.avatarBase64;
+        tick.smallIconBase64 = parsed.smallIconBase64;
+        tick.appColor = parsed.appColor;
         if (parsed.canReply) {
             tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(parsed.packageName));
         }

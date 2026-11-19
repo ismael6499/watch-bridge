@@ -178,9 +178,22 @@ public class NotificationParser {
         if (parsed.senderAvatar == null) {
             Icon largeIcon = n.getLargeIcon();
             if (largeIcon != null) {
-                parsed.senderAvatar = drawableToScaledBitmap(largeIcon.loadDrawable(context), 128);
+                try {
+                    parsed.senderAvatar = drawableToScaledBitmap(largeIcon.loadDrawable(context), 128);
+                } catch (Exception ignored) {
+                }
             }
         }
+        if (parsed.senderAvatar != null) {
+            parsed.avatarBase64 = encodeBitmapWebpBase64(scaleBitmap(parsed.senderAvatar, 96), 70);
+        }
+
+        parsed.appColor = n.color;
+        if (parsed.appColor == 0) {
+            if (AppDatabase.PKG_TEAMS.equals(pkg)) parsed.appColor = 0xFF7F85F5;
+            else if (AppDatabase.PKG_WHATSAPP.equals(pkg) || AppDatabase.PKG_WHATSAPP_BUSINESS.equals(pkg)) parsed.appColor = 0xFF21C063;
+        }
+        parsed.smallIconBase64 = extractNormalizedSmallIconBase64(context, pkg, n);
 
         // Detect Voice Note & attempt to resolve latest .opus file from SAF tree
         if (isVoiceNoteText(text)) {
@@ -618,6 +631,61 @@ public class NotificationParser {
         int nw = Math.max(1, Math.round(w * ratio));
         int nh = Math.max(1, Math.round(h * ratio));
         return Bitmap.createScaledBitmap(src, nw, nh, true);
+    }
+
+    private static String encodeBitmapWebpBase64(Bitmap bmp, int quality) {
+        if (bmp == null) return "";
+        try {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            bmp.compress(Bitmap.CompressFormat.WEBP, quality, baos);
+            return Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String extractNormalizedSmallIconBase64(Context context, String pkg, Notification n) {
+        try {
+            Icon small = n.getSmallIcon();
+            if (small == null) return "";
+            Drawable d = small.loadDrawable(context);
+            if (d == null && !TextUtils.isEmpty(pkg)) {
+                Context pkgCtx = context.createPackageContext(pkg, Context.CONTEXT_IGNORE_SECURITY);
+                d = small.loadDrawable(pkgCtx);
+            }
+            if (d == null) return "";
+            Bitmap bmp = drawableToScaledBitmap(d, 64);
+            if (bmp == null) return "";
+            Bitmap normalized = normalizeSmallIconMask(bmp);
+            if (normalized == null) return "";
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            normalized.compress(Bitmap.CompressFormat.PNG, 100, baos);
+            return Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static Bitmap normalizeSmallIconMask(Bitmap src) {
+        int w = src.getWidth();
+        int h = src.getHeight();
+        int[] pixels = new int[w * h];
+        src.getPixels(pixels, 0, w, 0, 0, w, h);
+        int opaqueCount = 0;
+        int visibleCount = 0;
+        for (int i = 0; i < pixels.length; i++) {
+            int alpha = (pixels[i] >>> 24) & 0xFF;
+            if (alpha > 10) visibleCount++;
+            if (alpha > 240) opaqueCount++;
+            pixels[i] = (alpha << 24) | 0x00FFFFFF;
+        }
+        // If >92% of pixels are completely opaque (non-transparent square), skip custom small icon
+        if (visibleCount == 0 || opaqueCount > (pixels.length * 0.92f)) {
+            return null;
+        }
+        Bitmap out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+        out.setPixels(pixels, 0, w, 0, 0, w, h);
+        return out;
     }
 
     private static String charSeqToString(CharSequence cs) {
