@@ -261,6 +261,11 @@ public class WearDataLayerManager {
                 conv.quickReplies = conv.canReply
                         ? Arrays.asList(prefs.getQuickRepliesForPackage(m.packageName))
                         : new ArrayList<>();
+                com.nitsutech.watchbridge.engine.ActionCache.CachedActions cachedActions =
+                        com.nitsutech.watchbridge.engine.ActionCache.get(m.conversationKey);
+                if (cachedActions != null && cachedActions.extraActionTitles != null) {
+                    conv.extraActionTitles = new ArrayList<>(cachedActions.extraActionTitles);
+                }
                 grouped.put(m.conversationKey, conv);
             }
             if (conv.messages.size() < 10) {

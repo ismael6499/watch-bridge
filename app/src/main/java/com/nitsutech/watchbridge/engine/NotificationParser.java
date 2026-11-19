@@ -588,6 +588,14 @@ public class NotificationParser {
             }
             if (parsed.markReadAction == null && (actionTitle.contains("read") || actionTitle.contains("leído") || actionTitle.contains("leido"))) {
                 parsed.markReadAction = action;
+                continue;
+            }
+            if (!parsed.isIncomingCall && action.actionIntent != null && action.title != null) {
+                String cleanAction = action.title.toString().trim();
+                if (!cleanAction.isEmpty() && parsed.extraActions.size() < 3) {
+                    parsed.extraActions.add(action);
+                    parsed.extraActionTitles.add(cleanAction);
+                }
             }
         }
     }

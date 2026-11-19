@@ -37,6 +37,7 @@ public class WearProtocol {
     public static final String CMD_STOP_CHAT_ALERT = "STOP_CHAT_ALERT";
     public static final String CMD_ANSWER_CALL = "ANSWER_CALL";
     public static final String CMD_DECLINE_CALL = "DECLINE_CALL";
+    public static final String CMD_EXEC_CUSTOM_ACTION = "EXEC_CUSTOM_ACTION";
 
     public static final int KIND_CHAT = 0;
     public static final int KIND_EVENT = 1;
@@ -85,6 +86,7 @@ public class WearProtocol {
         public boolean canMarkRead;
         public long lastTimestamp;
         public List<String> quickReplies = new ArrayList<>();
+        public List<String> extraActionTitles = new ArrayList<>();
         public List<MessageDto> messages = new ArrayList<>();
     }
 
@@ -134,6 +136,7 @@ public class WearProtocol {
         public String smallIconBase64;
         public int appColor;
         public List<String> quickReplies = new ArrayList<>();
+        public List<String> extraActionTitles = new ArrayList<>();
     }
 
     public static class WatchCommand {

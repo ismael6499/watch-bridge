@@ -185,4 +185,12 @@ public class WatchDataClient {
         cmd.conversationKey = conversationKey;
         sendCommandAsync(context, cmd);
     }
+
+    public static void execCustomAction(Context context, String conversationKey, int index) {
+        WearProtocol.WatchCommand cmd = new WearProtocol.WatchCommand();
+        cmd.action = WearProtocol.CMD_EXEC_CUSTOM_ACTION;
+        cmd.conversationKey = conversationKey;
+        cmd.valueInt = index;
+        sendCommandAsync(context, cmd);
+    }
 }

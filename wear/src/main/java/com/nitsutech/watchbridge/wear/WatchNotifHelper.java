@@ -182,6 +182,25 @@ public class WatchNotifHelper {
             ).addRemoteInput(ri).build());
         }
 
+        // Attach real 1-tap custom actions from original notification (e.g., Teams "Like")
+        if (tick.extraActionTitles != null && !tick.extraActionTitles.isEmpty()) {
+            int max = Math.min(tick.extraActionTitles.size(), 3);
+            for (int i = 0; i < max; i++) {
+                String title = tick.extraActionTitles.get(i);
+                if (TextUtils.isEmpty(title)) continue;
+                Intent actIntent = new Intent(context, WatchNotifActionReceiver.class);
+                actIntent.setAction(WatchNotifActionReceiver.ACTION_WATCH_CUSTOM_ACTION);
+                actIntent.putExtra(WatchNotifActionReceiver.EXTRA_CONV_KEY, tick.conversationKey);
+                actIntent.putExtra(WatchNotifActionReceiver.EXTRA_NOTIF_ID, notifId);
+                actIntent.putExtra(WatchNotifActionReceiver.EXTRA_ACTION_INDEX, i);
+                PendingIntent actPi = PendingIntent.getBroadcast(
+                        context, notifId + 60000 + i, actIntent,
+                        PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT
+                );
+                builder.addAction(R.drawable.ic_watch_logo, title, actPi);
+            }
+        }
+
         if (tick.isRepeating) {
             Intent stopIntent = new Intent(context, WatchNotifActionReceiver.class);
             stopIntent.setAction(WatchNotifActionReceiver.ACTION_WATCH_STOP_ALERT);

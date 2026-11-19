@@ -23,9 +23,11 @@ public class WatchNotifActionReceiver extends BroadcastReceiver {
     public static final String ACTION_DISMISS_WATCH_NOTIF = "com.nitsutech.watchbridge.WATCH_ACTION_DISMISS";
     public static final String ACTION_WATCH_ANSWER_CALL = "com.nitsutech.watchbridge.WATCH_ACTION_ANSWER_CALL";
     public static final String ACTION_WATCH_DECLINE_CALL = "com.nitsutech.watchbridge.WATCH_ACTION_DECLINE_CALL";
+    public static final String ACTION_WATCH_CUSTOM_ACTION = "com.nitsutech.watchbridge.WATCH_ACTION_CUSTOM";
 
     public static final String EXTRA_CONV_KEY = "conv_key";
     public static final String EXTRA_NOTIF_ID = "notif_id";
+    public static final String EXTRA_ACTION_INDEX = "action_index";
 
     @Override
     public void onReceive(Context context, Intent intent) {
@@ -80,6 +82,12 @@ public class WatchNotifActionReceiver extends BroadcastReceiver {
             WatchNotifHelper.cancelCallNotification(context);
             if (convKey != null) {
                 WatchDataClient.declineCall(context, convKey);
+                cancelLocalNotif(context, convKey, notifId);
+            }
+        } else if (ACTION_WATCH_CUSTOM_ACTION.equals(action)) {
+            int idx = intent.getIntExtra(EXTRA_ACTION_INDEX, -1);
+            if (convKey != null && idx >= 0) {
+                WatchDataClient.execCustomAction(context, convKey, idx);
                 cancelLocalNotif(context, convKey, notifId);
             }
         }

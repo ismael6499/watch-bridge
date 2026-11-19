@@ -380,6 +380,7 @@ public class PersistentRepeatForegroundService extends Service {
             tick.avatarBase64 = cached.avatarBase64;
             tick.smallIconBase64 = cached.smallIconBase64;
             tick.appColor = cached.appColor;
+            tick.extraActionTitles = new java.util.ArrayList<>(cached.extraActionTitles);
         }
         if (lastItem.canReply) {
             tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(session.packageName));

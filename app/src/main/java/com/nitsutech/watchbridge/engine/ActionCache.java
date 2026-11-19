@@ -22,6 +22,8 @@ public class ActionCache {
         public Notification.Action markReadAction;
         public PendingIntent answerCallIntent;
         public PendingIntent declineCallIntent;
+        public List<Notification.Action> extraActions = new ArrayList<>();
+        public List<String> extraActionTitles = new ArrayList<>();
         public Bitmap avatarBitmap;
         public String avatarBase64 = "";
         public String smallIconBase64 = "";
@@ -69,6 +71,8 @@ public class ActionCache {
         if (msg.declineCallIntent != null) {
             entry.declineCallIntent = msg.declineCallIntent;
         }
+        entry.extraActions = new ArrayList<>(msg.extraActions);
+        entry.extraActionTitles = new ArrayList<>(msg.extraActionTitles);
         if (msg.senderAvatar != null) {
             entry.avatarBitmap = msg.senderAvatar;
         }

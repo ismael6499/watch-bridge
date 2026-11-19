@@ -150,6 +150,26 @@ public class ProfileController {
         WearDataLayerManager.sendCallEndedAsync(context, conversationKey);
     }
 
+    public static void executeCustomAction(Context context, String conversationKey, int actionIndex) {
+        if (TextUtils.isEmpty(conversationKey) || actionIndex < 0) return;
+        ActionCache.CachedActions cached = ActionCache.get(conversationKey);
+        if (cached != null && cached.extraActions != null && actionIndex < cached.extraActions.size()) {
+            Notification.Action act = cached.extraActions.get(actionIndex);
+            if (act != null && act.actionIntent != null) {
+                sendCallPendingIntent(act.actionIntent);
+            }
+        }
+        PersistentRepeatForegroundService.stopChatSession(context, conversationKey);
+        ProxyNotificationHelper.cancelNotificationForChat(context, conversationKey);
+        AppDatabase db = AppDatabase.getInstance(context);
+        db.executor().execute(() -> {
+            db.chatMessageDao().markConversationRead(conversationKey);
+            WearDataLayerManager.syncStateBlocking(context);
+            context.sendBroadcast(new Intent(PersistentRepeatForegroundService.ACTION_STATE_BROADCAST)
+                    .setPackage(context.getPackageName()));
+        });
+    }
+
     private static void sendCallPendingIntent(PendingIntent pi) {
         try {
             if (Build.VERSION.SDK_INT >= 34) {

@@ -541,9 +541,29 @@ public class WearMainActivity extends AppCompatActivity {
         View btnReply = findViewById(R.id.btn_wear_reply_voice);
         View btnMarkRead = findViewById(R.id.btn_wear_mark_read);
         boolean showReply = isChat && conv.canReply;
+        boolean hasExtras = conv.extraActionTitles != null && !conv.extraActionTitles.isEmpty();
         btnReply.setVisibility(showReply ? View.VISIBLE : View.GONE);
-        llQuickReplies.setVisibility(showReply ? View.VISIBLE : View.GONE);
+        llQuickReplies.setVisibility((showReply || hasExtras) ? View.VISIBLE : View.GONE);
         btnMarkRead.setVisibility(conv.canMarkRead ? View.VISIBLE : View.GONE);
+
+        if (hasExtras) {
+            for (int i = 0; i < conv.extraActionTitles.size(); i++) {
+                final int idx = i;
+                String title = conv.extraActionTitles.get(i);
+                if (TextUtils.isEmpty(title)) continue;
+                Button ab = new Button(this);
+                ab.setText(title);
+                ab.setAllCaps(false);
+                ab.setTextSize(11f);
+                ab.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF3949AB));
+                ab.setTextColor(0xFFFFFFFF);
+                ab.setOnClickListener(v -> {
+                    WatchDataClient.execCustomAction(this, conv.conversationKey, idx);
+                    Toast.makeText(this, R.string.wear_toast_action_sent, Toast.LENGTH_SHORT).show();
+                });
+                llQuickReplies.addView(ab);
+            }
+        }
 
         if (showReply && conv.quickReplies != null) {
             for (String qr : conv.quickReplies) {

@@ -161,6 +161,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         tick.avatarBase64 = parsed.avatarBase64;
         tick.smallIconBase64 = parsed.smallIconBase64;
         tick.appColor = parsed.appColor;
+        tick.extraActionTitles = new java.util.ArrayList<>(parsed.extraActionTitles);
         if (parsed.canReply) {
             tick.quickReplies = java.util.Arrays.asList(prefs.getQuickRepliesForPackage(parsed.packageName));
         }

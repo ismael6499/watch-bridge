@@ -102,6 +102,9 @@ public class PhoneWearListenerService extends WearableListenerService {
             case WearProtocol.CMD_DECLINE_CALL:
                 ProfileController.executeDeclineCall(this, cmd.conversationKey);
                 break;
+            case WearProtocol.CMD_EXEC_CUSTOM_ACTION:
+                ProfileController.executeCustomAction(this, cmd.conversationKey, cmd.valueInt);
+                break;
         }
     }
 
