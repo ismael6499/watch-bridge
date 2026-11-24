@@ -67,6 +67,15 @@
     <string name="btn_test_normal_message">Probar Mensaje Normal Teams (Según Modo)</string>
     <string name="btn_test_watch_call">Probar Llamada Entrante en Reloj</string>
     <string name="btn_test_replay_active">Reenviar Notificaciones Visibles al Reloj</string>
+    <string name="label_test_images_count_default">Imágenes de prueba: 4</string>
+    <string name="label_test_images_count_fmt">Imágenes de prueba: %1$d</string>
+    <string name="btn_test_watch_images">Probar Foto / Collage en Reloj</string>
+    <string name="toast_test_images_sent_fmt">Prueba de fotos enviada al reloj (%1$d imágenes)</string>
+    <string name="test_images_conv_title">Prueba Fotos WhatsApp</string>
+    <string name="test_images_sender_name">Prueba Fotos</string>
+    <string name="test_images_msg_zero">Mensaje de prueba (0 fotos)</string>
+    <string name="test_images_msg_one">📷 Foto</string>
+    <string name="test_images_msg_multi_fmt">📷 %1$d fotos</string>
 
     <!-- Permissions -->
     <string name="section_permissions">Permisos y Configuración</string>

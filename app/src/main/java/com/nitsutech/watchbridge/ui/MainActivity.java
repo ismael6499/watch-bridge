@@ -27,6 +27,7 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -382,6 +383,30 @@ public class MainActivity extends AppCompatActivity {
                             } else {
                                 Toast.makeText(this, getString(R.string.toast_replay_sent_fmt, sentCount), Toast.LENGTH_SHORT).show();
                             }
+                            refreshUi();
+                        })));
+
+        TextView tvTestImagesCount = findViewById(R.id.tv_test_images_count);
+        SeekBar seekTestImages = findViewById(R.id.seek_test_images_count);
+        tvTestImagesCount.setText(getString(R.string.label_test_images_count_fmt, seekTestImages.getProgress()));
+        seekTestImages.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                tvTestImagesCount.setText(getString(R.string.label_test_images_count_fmt, progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+            }
+        });
+        findViewById(R.id.btn_test_watch_images).setOnClickListener(v ->
+                ProfileController.triggerTestImageMessage(this, seekTestImages.getProgress(), statusMsg ->
+                        runOnUiThread(() -> {
+                            Toast.makeText(this, statusMsg, Toast.LENGTH_SHORT).show();
                             refreshUi();
                         })));
     }

@@ -48,10 +48,12 @@ public class WatchNotifHelper {
         Integer prevId = ACTIVE_IDS.get(tick.conversationKey);
         if (prevId != null) {
             nm.cancel(prevId);
-            try {
-                Thread.sleep(180L);
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
+            if (!tick.silentOnWatch) {
+                try {
+                    Thread.sleep(180L);
+                } catch (InterruptedException ignored) {
+                    Thread.currentThread().interrupt();
+                }
             }
         }
         int notifId = NEXT_ID.incrementAndGet();

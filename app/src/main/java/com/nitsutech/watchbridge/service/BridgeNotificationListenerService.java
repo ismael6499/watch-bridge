@@ -305,6 +305,18 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
             return;
         }
 
+        if ((AppDatabase.PKG_WHATSAPP.equals(parsed.packageName)
+                || AppDatabase.PKG_WHATSAPP_BUSINESS.equals(parsed.packageName))
+                && TextUtils.isEmpty(parsed.mediaBase64)
+                && NotificationParser.parseExpectedPhotoCount(parsed.messageText) > 0) {
+            try {
+                Thread.sleep(550L);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
+            NotificationParser.tryAttachRecentWhatsAppMedia(this, parsed);
+        }
+
         ChatMessageEntity entity = new ChatMessageEntity();
         entity.conversationKey = parsed.conversationKey;
         entity.packageName = parsed.packageName;
@@ -345,7 +357,7 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
         List<ChatMessageEntity> thread = db.chatMessageDao().getActiveThreadSync(parsed.conversationKey);
 
         if (decision.coalescedByCooldown) {
-            // Burst Cooling Time: silently merge message into active thread & sync watch without extra buzz
+            // Burst Cooling Time: silently deliver message to watch & thread without vibration/sound
             if (prefs.isPhoneBridgeNotifEnabled()) {
                 ProxyNotificationHelper.postOrRepingProxyNotification(
                         this,
@@ -357,11 +369,15 @@ public class BridgeNotificationListenerService extends NotificationListenerServi
                         false,
                         true,
                         false,
+                        true,
                         thread,
                         prefs
                 );
             }
-            WearDataLayerManager.syncStateBlocking(this);
+            WearProtocol.AlertTickPayload tick = buildAlertTick(
+                    parsed, decision.hapticPattern, false, true, prefs);
+            tick.isRepeating = PersistentRepeatForegroundService.isConversationRepeating(parsed.conversationKey);
+            WearDataLayerManager.syncAndSendAlertBlocking(this, tick);
             sendBroadcast(new Intent(PersistentRepeatForegroundService.ACTION_STATE_BROADCAST).setPackage(getPackageName()));
             return;
         }

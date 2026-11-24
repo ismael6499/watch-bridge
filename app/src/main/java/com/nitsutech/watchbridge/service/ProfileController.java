@@ -6,6 +6,10 @@ import android.app.PendingIntent;
 import android.app.RemoteInput;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -19,12 +23,15 @@ import com.nitsutech.watchbridge.data.PrefsManager;
 import com.nitsutech.watchbridge.data.SenderRuleEntity;
 import com.nitsutech.watchbridge.engine.ActionCache;
 import com.nitsutech.watchbridge.engine.CooldownTracker;
+import com.nitsutech.watchbridge.engine.NotificationParser;
 import com.nitsutech.watchbridge.engine.ParsedMessage;
 import com.nitsutech.watchbridge.engine.RuleEvaluator;
 import com.nitsutech.watchbridge.receiver.ScheduleAndTimerReceiver;
 import com.nitsutech.watchbridge.wear.WearDataLayerManager;
 import com.nitsutech.watchbridge.widget.BridgeWidgetUpdater;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -571,5 +578,123 @@ public class ProfileController {
         tick.canAnswerCall = true;
         tick.canDeclineCall = true;
         WearDataLayerManager.sendAlertTickAsync(context, tick);
+    }
+
+    public static void triggerTestImageMessage(Context context, int photoCount, java.util.function.Consumer<String> onResult) {
+        final int count = Math.max(0, Math.min(6, photoCount));
+        AppDatabase db = AppDatabase.getInstance(context);
+        PrefsManager prefs = new PrefsManager(context);
+        db.executor().execute(() -> {
+            db.ensureDefaultsSync();
+            long now = System.currentTimeMillis();
+            String convKey = "test-img|" + AppDatabase.PKG_WHATSAPP + "|photo-test";
+
+            ParsedMessage parsed = new ParsedMessage();
+            parsed.conversationKey = convKey;
+            parsed.packageName = AppDatabase.PKG_WHATSAPP;
+            parsed.appLabel = "WhatsApp";
+            parsed.conversationTitle = context.getString(R.string.test_images_conv_title);
+            parsed.senderName = context.getString(R.string.test_images_sender_name);
+            parsed.timestamp = now;
+            parsed.isGroup = false;
+            parsed.notificationKind = com.nitsutech.watchbridge.wear.WearProtocol.KIND_CHAT;
+            parsed.canReply = true;
+            parsed.canMarkRead = true;
+            if (count == 0) {
+                parsed.messageText = context.getString(R.string.test_images_msg_zero);
+            } else if (count == 1) {
+                parsed.messageText = context.getString(R.string.test_images_msg_one);
+            } else {
+                parsed.messageText = context.getString(R.string.test_images_msg_multi_fmt, count);
+            }
+
+            if (count > 0) {
+                int[] palette = new int[]{0xFF1565C0, 0xFF2E7D32, 0xFFEF6C00, 0xFF6A1B9A};
+                int sampleCount = Math.min(count, 4);
+                List<Bitmap> bitmaps = new ArrayList<>(sampleCount);
+                for (int i = 0; i < sampleCount; i++) {
+                    bitmaps.add(createSamplePhotoBitmap(i + 1, palette[i]));
+                }
+                NotificationParser.saveBitmapsToMediaFields(context, bitmaps, count, parsed);
+            }
+
+            ChatMessageEntity entity = new ChatMessageEntity();
+            entity.conversationKey = convKey;
+            entity.packageName = parsed.packageName;
+            entity.appLabel = parsed.appLabel;
+            entity.conversationTitle = parsed.conversationTitle;
+            entity.senderName = parsed.senderName;
+            entity.messageText = parsed.messageText;
+            entity.timestamp = now;
+            entity.isGroup = false;
+            entity.notificationKind = parsed.notificationKind;
+            entity.canReply = true;
+            entity.canMarkRead = true;
+            entity.mediaPath = parsed.mediaPath;
+            entity.mediaBase64 = parsed.mediaBase64;
+            db.chatMessageDao().insert(entity);
+
+            List<ChatMessageEntity> thread = db.chatMessageDao().getActiveThreadSync(convKey);
+            if (prefs.isPhoneBridgeNotifEnabled()) {
+                ProxyNotificationHelper.postOrRepingProxyNotification(
+                        context, convKey, parsed.packageName, parsed.appLabel,
+                        parsed.conversationTitle, false, false, false,
+                        false, false, thread, prefs
+                );
+            }
+
+            com.nitsutech.watchbridge.wear.WearProtocol.AlertTickPayload tick =
+                    new com.nitsutech.watchbridge.wear.WearProtocol.AlertTickPayload();
+            tick.conversationKey = convKey;
+            tick.packageName = parsed.packageName;
+            tick.appLabel = parsed.appLabel;
+            tick.conversationTitle = parsed.conversationTitle;
+            tick.senderName = parsed.senderName;
+            tick.messageText = parsed.messageText;
+            tick.attemptCount = 1;
+            tick.hapticPattern = 1;
+            tick.escalationLevel = 1;
+            tick.notificationKind = parsed.notificationKind;
+            tick.canReply = true;
+            tick.canMarkRead = true;
+            tick.isRepeating = false;
+            tick.silentOnWatch = false;
+            tick.mediaBase64 = parsed.mediaBase64;
+            tick.appColor = 0xFF21C063;
+            tick.quickReplies = Arrays.asList(prefs.getQuickRepliesForPackage(AppDatabase.PKG_WHATSAPP));
+            WearDataLayerManager.syncAndSendAlertBlocking(context, tick);
+
+            context.sendBroadcast(new Intent(PersistentRepeatForegroundService.ACTION_STATE_BROADCAST)
+                    .setPackage(context.getPackageName()));
+            if (onResult != null) {
+                onResult.accept(context.getString(R.string.toast_test_images_sent_fmt, count));
+            }
+        });
+    }
+
+    private static Bitmap createSamplePhotoBitmap(int index, int bgColor) {
+        Bitmap bmp = Bitmap.createBitmap(240, 240, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(bmp);
+        canvas.drawColor(bgColor);
+
+        Paint circlePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        circlePaint.setColor(0x33FFFFFF);
+        canvas.drawCircle(120f, 120f, 76f, circlePaint);
+
+        Paint borderPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        borderPaint.setColor(0x55FFFFFF);
+        borderPaint.setStyle(Paint.Style.STROKE);
+        borderPaint.setStrokeWidth(6f);
+        canvas.drawRect(8f, 8f, 232f, 232f, borderPaint);
+
+        Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+        textPaint.setColor(0xFFFFFFFF);
+        textPaint.setTextSize(68f);
+        textPaint.setTypeface(Typeface.DEFAULT_BOLD);
+        textPaint.setTextAlign(Paint.Align.CENTER);
+        Paint.FontMetrics fm = textPaint.getFontMetrics();
+        float centerY = 120f - (fm.ascent + fm.descent) / 2f;
+        canvas.drawText("#" + index, 120f, centerY, textPaint);
+        return bmp;
     }
 }

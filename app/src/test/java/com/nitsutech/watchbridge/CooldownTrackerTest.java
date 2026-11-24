@@ -4,6 +4,7 @@ import com.nitsutech.watchbridge.data.AppDatabase;
 import com.nitsutech.watchbridge.data.AppRuleEntity;
 import com.nitsutech.watchbridge.data.SenderRuleEntity;
 import com.nitsutech.watchbridge.engine.CooldownTracker;
+import com.nitsutech.watchbridge.engine.NotificationParser;
 import com.nitsutech.watchbridge.engine.RuleEvaluator;
 import com.nitsutech.watchbridge.receiver.ScheduleAndTimerReceiver;
 
@@ -11,6 +12,7 @@ import org.junit.Test;
 
 import java.util.Calendar;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -98,5 +100,15 @@ public class CooldownTrackerTest {
         assertFalse(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, true, false, false, 3_000L));
         assertFalse(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, false, true, false, 3_000L));
         assertFalse(RuleEvaluator.shouldSilenceOnWatch(app, chatRule, false, false, true, 3_000L));
+    }
+
+    @Test
+    public void photoCountParsingDetectsSingleAndMultiPhotoNotifications() {
+        assertEquals(4, NotificationParser.parseExpectedPhotoCount("📷 4 photos"));
+        assertEquals(4, NotificationParser.parseExpectedPhotoCount("4 fotos"));
+        assertEquals(4, NotificationParser.parseExpectedPhotoCount("📷 7 photos"));
+        assertEquals(1, NotificationParser.parseExpectedPhotoCount("📷 Photo"));
+        assertEquals(1, NotificationParser.parseExpectedPhotoCount("Foto"));
+        assertEquals(0, NotificationParser.parseExpectedPhotoCount("Hola todo bien"));
     }
 }

@@ -13,6 +13,9 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Paint;
+import android.graphics.Rect;
+import android.graphics.Typeface;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.Icon;
@@ -42,10 +45,18 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class NotificationParser {
+
+    private static final Pattern PHOTO_COUNT_PATTERN = Pattern.compile(
+            "(?:^|\\D)(\\d+)\\s*(?:photos?|fotos?|images?|im[aá]genes?|stickers?)(?:\\b|$)",
+            Pattern.CASE_INSENSITIVE
+    );
 
     public static ParsedMessage parse(Context context, StatusBarNotification sbn,
                                       NotificationListenerService.RankingMap rankingMap, PrefsManager prefs) {
@@ -113,8 +124,22 @@ public class NotificationParser {
                         parsed.senderAvatar = drawableToScaledBitmap(d, 128);
                     }
                 }
-                if (lastMsg.getDataUri() != null) {
-                    extractMediaFromUri(context, lastMsg.getDataUri(), parsed);
+                List<Bitmap> styleBitmaps = new ArrayList<>();
+                for (int i = messages.size() - 1; i >= 0 && styleBitmaps.size() < 4; i--) {
+                    NotificationCompat.MessagingStyle.Message m = messages.get(i);
+                    if (m.getDataUri() != null) {
+                        String mime = m.getDataMimeType();
+                        if (mime != null && !mime.toLowerCase(Locale.ROOT).startsWith("image/")) {
+                            continue;
+                        }
+                        Bitmap bmp = decodeBitmapFromUri(context, m.getDataUri(), 360);
+                        if (bmp != null) {
+                            styleBitmaps.add(0, bmp);
+                        }
+                    }
+                }
+                if (!styleBitmaps.isEmpty()) {
+                    saveBitmapsToMediaFields(context, styleBitmaps, parsed);
                 }
             }
         }
@@ -174,6 +199,11 @@ public class NotificationParser {
         // Extract BigPicture / Picture / LargeIcon
         if (TextUtils.isEmpty(parsed.mediaPath)) {
             extractBitmapFromExtras(context, extras, parsed);
+        }
+        if (TextUtils.isEmpty(parsed.mediaBase64)
+                && (AppDatabase.PKG_WHATSAPP.equals(pkg) || AppDatabase.PKG_WHATSAPP_BUSINESS.equals(pkg))
+                && parseExpectedPhotoCount(text) > 0) {
+            tryAttachRecentWhatsAppMedia(context, parsed);
         }
         if (parsed.senderAvatar == null) {
             Icon largeIcon = n.getLargeIcon();
@@ -501,18 +531,131 @@ public class NotificationParser {
                 || lower.endsWith(".aac") || lower.endsWith(".mp3");
     }
 
-    private static void extractMediaFromUri(Context context, Uri uri, ParsedMessage parsed) {
-        try {
-            ContentResolver cr = context.getContentResolver();
-            try (InputStream is = cr.openInputStream(uri)) {
-                if (is == null) return;
-                Bitmap raw = BitmapFactory.decodeStream(is);
-                if (raw != null) {
-                    saveBitmapToMediaFields(context, raw, parsed);
+    public static int parseExpectedPhotoCount(String text) {
+        if (text == null || text.trim().isEmpty()) return 0;
+        Matcher m = PHOTO_COUNT_PATTERN.matcher(text);
+        if (m.find()) {
+            try {
+                int count = Integer.parseInt(m.group(1));
+                return Math.max(1, Math.min(4, count));
+            } catch (NumberFormatException ignored) {
+                return 4;
+            }
+        }
+        String lower = text.toLowerCase(Locale.ROOT);
+        if (lower.contains("📷") || lower.contains("📸")
+                || lower.contains("photo") || lower.contains("foto")
+                || lower.contains("image") || lower.contains("imagen")
+                || lower.contains("sticker") || lower.contains("gif")) {
+            return 1;
+        }
+        return 0;
+    }
+
+    public static boolean tryAttachRecentWhatsAppMedia(Context context, ParsedMessage parsed) {
+        if (context == null || parsed == null || !canReadDirectStorage(context)) {
+            return false;
+        }
+        int expected = Math.max(1, Math.min(4, parseExpectedPhotoCount(parsed.messageText)));
+        File ext = Environment.getExternalStorageDirectory();
+        if (ext == null) return false;
+
+        String[] relPaths = new String[]{
+                "Android/media/com.whatsapp/WhatsApp/Media/WhatsApp Images",
+                "Android/media/com.whatsapp.w4b/WhatsApp Business/Media/WhatsApp Business Images",
+                "WhatsApp/Media/WhatsApp Images",
+                "WhatsApp Business/Media/WhatsApp Business Images"
+        };
+        long targetTime = parsed.timestamp > 0 ? parsed.timestamp : System.currentTimeMillis();
+        long maxAgeWindowMs = 90_000L;
+        List<File> candidates = new ArrayList<>();
+
+        for (String rel : relPaths) {
+            File dir = new File(ext, rel);
+            if (!dir.exists() || !dir.isDirectory()) continue;
+            File[] files = dir.listFiles();
+            if (files == null) continue;
+            for (File f : files) {
+                if (!f.isFile() || !isSupportedImageName(f.getName())) continue;
+                if (Math.abs(targetTime - f.lastModified()) <= maxAgeWindowMs) {
+                    candidates.add(f);
                 }
             }
-        } catch (Exception ignored) {
         }
+        if (candidates.isEmpty()) return false;
+
+        candidates.sort((a, b) -> Long.compare(b.lastModified(), a.lastModified()));
+        int limit = Math.min(expected, candidates.size());
+        List<File> selected = new ArrayList<>(candidates.subList(0, limit));
+        if (selected.size() > 1) {
+            selected.sort(Comparator.comparingLong(File::lastModified));
+        }
+
+        List<Bitmap> bitmaps = new ArrayList<>();
+        for (File f : selected) {
+            Bitmap bmp = decodeSampledFile(f, 320);
+            if (bmp != null) {
+                bitmaps.add(bmp);
+            }
+        }
+        if (bitmaps.isEmpty()) return false;
+
+        saveBitmapsToMediaFields(context, bitmaps, parsed);
+        return !TextUtils.isEmpty(parsed.mediaBase64);
+    }
+
+    private static boolean isSupportedImageName(String name) {
+        if (name == null) return false;
+        String lower = name.toLowerCase(Locale.ROOT);
+        return lower.endsWith(".jpg") || lower.endsWith(".jpeg")
+                || lower.endsWith(".png") || lower.endsWith(".webp");
+    }
+
+    private static Bitmap decodeBitmapFromUri(Context context, Uri uri, int maxDim) {
+        try {
+            ContentResolver cr = context.getContentResolver();
+            BitmapFactory.Options bounds = new BitmapFactory.Options();
+            bounds.inJustDecodeBounds = true;
+            try (InputStream is = cr.openInputStream(uri)) {
+                if (is == null) return null;
+                BitmapFactory.decodeStream(is, null, bounds);
+            }
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            if (bounds.outWidth > 0 && bounds.outHeight > 0) {
+                opts.inSampleSize = calculateInSampleSize(bounds.outWidth, bounds.outHeight, maxDim);
+            }
+            try (InputStream is = cr.openInputStream(uri)) {
+                if (is == null) return null;
+                Bitmap raw = BitmapFactory.decodeStream(is, null, opts);
+                return scaleBitmap(raw, maxDim);
+            }
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static Bitmap decodeSampledFile(File f, int reqMaxDim) {
+        if (f == null || !f.exists() || !f.canRead()) return null;
+        try {
+            BitmapFactory.Options opts = new BitmapFactory.Options();
+            opts.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(f.getAbsolutePath(), opts);
+            if (opts.outWidth <= 0 || opts.outHeight <= 0) return null;
+            opts.inSampleSize = calculateInSampleSize(opts.outWidth, opts.outHeight, reqMaxDim);
+            opts.inJustDecodeBounds = false;
+            Bitmap raw = BitmapFactory.decodeFile(f.getAbsolutePath(), opts);
+            return scaleBitmap(raw, reqMaxDim);
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static int calculateInSampleSize(int width, int height, int reqMaxDim) {
+        int inSampleSize = 1;
+        while ((width / inSampleSize) > reqMaxDim * 2 || (height / inSampleSize) > reqMaxDim * 2) {
+            inSampleSize *= 2;
+        }
+        return inSampleSize;
     }
 
     private static void extractBitmapFromExtras(Context context, Bundle extras, ParsedMessage parsed) {
@@ -520,28 +663,115 @@ public class NotificationParser {
             Parcelable pic = extras.getParcelable(Notification.EXTRA_PICTURE);
             if (pic instanceof Bitmap) {
                 saveBitmapToMediaFields(context, (Bitmap) pic, parsed);
+                return;
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                Parcelable picIcon = extras.getParcelable(Notification.EXTRA_PICTURE_ICON);
+                if (picIcon instanceof Icon) {
+                    Drawable d = ((Icon) picIcon).loadDrawable(context);
+                    Bitmap bmp = drawableToScaledBitmap(d, 480);
+                    if (bmp != null) {
+                        saveBitmapToMediaFields(context, bmp, parsed);
+                    }
+                }
             }
         } catch (Exception ignored) {
         }
     }
 
     private static void saveBitmapToMediaFields(Context context, Bitmap raw, ParsedMessage parsed) {
+        if (raw == null) return;
+        saveBitmapsToMediaFields(context, Collections.singletonList(raw), parsed);
+    }
+
+    private static void saveBitmapsToMediaFields(Context context, List<Bitmap> bitmaps, ParsedMessage parsed) {
+        saveBitmapsToMediaFields(context, bitmaps, bitmaps == null ? 0 : bitmaps.size(), parsed);
+    }
+
+    public static void saveBitmapsToMediaFields(Context context, List<Bitmap> bitmaps, int totalCount, ParsedMessage parsed) {
+        if (bitmaps == null || bitmaps.isEmpty()) return;
         try {
-            Bitmap scaled = scaleBitmap(raw, 480);
+            Bitmap phonePreview;
+            Bitmap watchThumb;
+            if (bitmaps.size() == 1) {
+                Bitmap single = bitmaps.get(0);
+                phonePreview = scaleBitmap(single, 480);
+                watchThumb = scaleBitmap(single, 260);
+            } else {
+                Bitmap collage = composePreviewBitmap(bitmaps, totalCount);
+                phonePreview = collage;
+                watchThumb = collage;
+            }
+
             File dir = new File(context.getCacheDir(), "proxy_media");
             if (!dir.exists()) dir.mkdirs();
             File out = new File(dir, "media_" + System.currentTimeMillis() + ".png");
             try (FileOutputStream fos = new FileOutputStream(out)) {
-                scaled.compress(Bitmap.CompressFormat.PNG, 90, fos);
+                phonePreview.compress(Bitmap.CompressFormat.PNG, 90, fos);
             }
             parsed.mediaPath = out.getAbsolutePath();
 
-            Bitmap thumb = scaleBitmap(raw, 180);
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            thumb.compress(Bitmap.CompressFormat.WEBP, 65, baos);
+            watchThumb.compress(Bitmap.CompressFormat.WEBP, 60, baos);
             parsed.mediaBase64 = Base64.encodeToString(baos.toByteArray(), Base64.NO_WRAP);
         } catch (Exception ignored) {
         }
+    }
+
+    private static Bitmap composePreviewBitmap(List<Bitmap> bitmaps, int totalCount) {
+        int count = Math.min(bitmaps.size(), 4);
+        int canvasW = 320;
+        int canvasH = count == 2 ? 160 : 320;
+        Bitmap out = Bitmap.createBitmap(canvasW, canvasH, Bitmap.Config.ARGB_8888);
+        Canvas canvas = new Canvas(out);
+        canvas.drawColor(0xFF121212);
+
+        if (count == 2) {
+            drawCenterCropped(canvas, bitmaps.get(0), new Rect(0, 0, 158, 160));
+            drawCenterCropped(canvas, bitmaps.get(1), new Rect(162, 0, 320, 160));
+        } else {
+            drawCenterCropped(canvas, bitmaps.get(0), new Rect(0, 0, 158, 158));
+            drawCenterCropped(canvas, bitmaps.get(1), new Rect(162, 0, 320, 158));
+            drawCenterCropped(canvas, bitmaps.get(2), new Rect(0, 162, 158, 320));
+            if (count >= 4) {
+                Rect fourth = new Rect(162, 162, 320, 320);
+                drawCenterCropped(canvas, bitmaps.get(3), fourth);
+                if (totalCount > 4) {
+                    Paint overlay = new Paint();
+                    overlay.setColor(0x99000000);
+                    canvas.drawRect(fourth, overlay);
+
+                    Paint textPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+                    textPaint.setColor(0xFFFFFFFF);
+                    textPaint.setTextSize(48f);
+                    textPaint.setTypeface(Typeface.DEFAULT_BOLD);
+                    textPaint.setTextAlign(Paint.Align.CENTER);
+                    Paint.FontMetrics fm = textPaint.getFontMetrics();
+                    float centerX = (fourth.left + fourth.right) / 2f;
+                    float centerY = (fourth.top + fourth.bottom) / 2f - (fm.ascent + fm.descent) / 2f;
+                    canvas.drawText("+" + (totalCount - 4), centerX, centerY, textPaint);
+                }
+            }
+        }
+        return out;
+    }
+
+    private static void drawCenterCropped(Canvas canvas, Bitmap src, Rect dst) {
+        if (src == null || src.getWidth() <= 0 || src.getHeight() <= 0) return;
+        float srcAspect = (float) src.getWidth() / src.getHeight();
+        float dstAspect = (float) dst.width() / dst.height();
+        Rect srcRect;
+        if (srcAspect > dstAspect) {
+            int cropW = Math.max(1, Math.round(src.getHeight() * dstAspect));
+            int left = (src.getWidth() - cropW) / 2;
+            srcRect = new Rect(left, 0, left + cropW, src.getHeight());
+        } else {
+            int cropH = Math.max(1, Math.round(src.getWidth() / dstAspect));
+            int top = (src.getHeight() - cropH) / 2;
+            srcRect = new Rect(0, top, src.getWidth(), top + cropH);
+        }
+        Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
+        canvas.drawBitmap(src, srcRect, dst, paint);
     }
 
     private static void extractActions(Notification n, ParsedMessage parsed) {

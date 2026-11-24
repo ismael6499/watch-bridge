@@ -525,7 +525,7 @@ public class WearMainActivity extends AppCompatActivity {
                         ImageView iv = new ImageView(this);
                         iv.setImageBitmap(bmp);
                         iv.setAdjustViewBounds(true);
-                        iv.setMaxHeight(160);
+                        iv.setMaxHeight(260);
                         row.addView(iv);
                     }
                 } catch (Exception ignored) {

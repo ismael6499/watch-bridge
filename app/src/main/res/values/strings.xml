@@ -67,6 +67,15 @@
     <string name="btn_test_normal_message">Test Normal Teams Message (Follows Mode)</string>
     <string name="btn_test_watch_call">Test Incoming Call on Watch</string>
     <string name="btn_test_replay_active">Replay Visible Phone Notifications</string>
+    <string name="label_test_images_count_default">Test Images: 4</string>
+    <string name="label_test_images_count_fmt">Test Images: %1$d</string>
+    <string name="btn_test_watch_images">Test Photo / Collage on Watch</string>
+    <string name="toast_test_images_sent_fmt">Photo test sent to Watch (%1$d images)</string>
+    <string name="test_images_conv_title">WhatsApp Photo Test</string>
+    <string name="test_images_sender_name">Photo Test</string>
+    <string name="test_images_msg_zero">Test message (0 photos)</string>
+    <string name="test_images_msg_one">📷 Photo</string>
+    <string name="test_images_msg_multi_fmt">📷 %1$d photos</string>
 
     <!-- Permissions -->
     <string name="section_permissions">Setup &amp; Permissions</string>
